@@ -3,18 +3,26 @@ import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Home, LayoutDashboard, ClipboardCheck, Search, Settings, 
-  LogOut, Building2, Eye, Layers, ChevronRight, Filter
+  LogOut, Building2, Eye, Layers, ChevronRight, Filter, Receipt, DollarSign, KeyRound
 } from 'lucide-react';
-import Sidebar from './components/Sidebar'; // Asegúrate que la ruta sea correcta
+import Sidebar from './components/Sidebar';
 import FormularioEstudio from './components/FormularioEstudio';
-import DetalleExpediente from './components/DetalleExpediente'; // Importamos el nuevo componente
+import DetalleExpediente from './components/DetalleExpediente';
+import FormularioAfectacion from './components/FormularioAfectacion';
+import DetalleAfectacion from './components/DetalleAfectacion';
 
 function App() {
-  const [currentView, setCurrentView] = useState('register'); // 'register', 'query', 'dashboard', 'detail'
-  const [records, setRecords] = useState([]); // Estado para guardar los datos de la BD
+  const [currentView, setCurrentView] = useState('register');
+  const [records, setRecords] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedRecord, setSelectedRecord] = useState(null); // Nuevo estado para el detalle
+  const [selectedRecord, setSelectedRecord] = useState(null);
+
+  // === ESTADO PARA AFECTACIONES PRESUPUESTALES ===
+  const [afectaciones, setAfectaciones] = useState([]);
+  const [isLoadingAfectaciones, setIsLoadingAfectaciones] = useState(false);
+  const [searchTermAfectaciones, setSearchTermAfectaciones] = useState('');
+  const [selectedAfectacion, setSelectedAfectacion] = useState(null);
 
   // Usuario simulado
   const currentUser = {
@@ -45,7 +53,21 @@ function App() {
     }
   };
 
-  // Funciones para manejar la vista de detalle
+  // === FUNCIONES PARA AFECTACIONES PRESUPUESTALES ===
+  const fetchAfectaciones = async () => {
+    setIsLoadingAfectaciones(true);
+    try {
+      const response = await axios.get('http://localhost:8080/api/afectaciones/lista');
+      setAfectaciones(response.data);
+    } catch (error) {
+      console.error("Error cargando afectaciones:", error);
+      setAfectaciones([]);
+    } finally {
+      setIsLoadingAfectaciones(false);
+    }
+  };
+
+  // Funciones para manejar la vista de detalle (Estudios)
   const handleVerDetalle = (record) => {
     setSelectedRecord(record);
     setCurrentView('detail');
@@ -56,18 +78,40 @@ function App() {
     setCurrentView('query');
   };
 
-  // Efecto para cargar datos automáticamente cuando entramos a la vista 'query'
+  // Funciones para manejar detalle (Afectaciones)
+  const handleVerDetalleAfectacion = (record) => {
+    setSelectedAfectacion(record);
+    setCurrentView('budget-detail');
+  };
+
+  const handleVolverConsultaAfectacion = () => {
+    setSelectedAfectacion(null);
+    setCurrentView('budget-query');
+  };
+
+  // Efecto para cargar datos automáticamente según la vista
   useEffect(() => {
     if (currentView === 'query') {
       fetchRecords();
     }
+    if (currentView === 'budget-query') {
+      fetchAfectaciones();
+    }
   }, [currentView]);
 
-  // Filtrar registros según el buscador
+  // Filtrar registros según el buscador (Estudios)
   const filteredRecords = records.filter(record => 
     record.dependencia?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     record.folio?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     record.giro?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Filtrar registros según el buscador (Afectaciones)
+  const filteredAfectaciones = afectaciones.filter(record => 
+    record.folioCa?.toLowerCase().includes(searchTermAfectaciones.toLowerCase()) ||
+    record.expediente?.folioExpediente?.toLowerCase().includes(searchTermAfectaciones.toLowerCase()) ||
+    record.expediente?.dependencia?.toLowerCase().includes(searchTermAfectaciones.toLowerCase()) ||
+    record.oficioSuficiencia?.toLowerCase().includes(searchTermAfectaciones.toLowerCase())
   );
 
   return (
@@ -90,7 +134,10 @@ function App() {
           <h2 className="text-lg font-bold text-slate-500 uppercase tracking-widest">
             {currentView === 'register' ? 'Nuevo Registro' : 
              currentView === 'query' ? 'Consulta de Expedientes' : 
-             currentView === 'detail' ? 'Detalle del Expediente' : 
+             currentView === 'detail' ? 'Detalle del Expediente' :
+             currentView === 'budget-affectation' ? 'Afectación Presupuestal' :
+             currentView === 'budget-query' ? 'Consulta de Suficiencia' :
+             currentView === 'budget-detail' ? 'Detalle de Afectación' :
              'Panel de Control'}
           </h2>
           <div className="flex items-center gap-4">
@@ -247,6 +294,157 @@ function App() {
                 <DetalleExpediente 
                   estudio={selectedRecord} 
                   onBack={handleVolverConsulta} 
+                />
+              </motion.div>
+            )}
+
+            {/* ============================================= */}
+            {/* VISTAS: AFECTACIÓN PRESUPUESTAL              */}
+            {/* ============================================= */}
+
+            {/* VISTA: FORMULARIO AFECTACIÓN */}
+            {currentView === 'budget-affectation' && (
+              <motion.div
+                key="formulario-afectacion"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <FormularioAfectacion onSuccess={fetchAfectaciones} />
+              </motion.div>
+            )}
+
+            {/* VISTA: CONSULTA AFECTACIONES (TABLA) */}
+            {currentView === 'budget-query' && (
+              <motion.div
+                key="consulta-afectaciones"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                className="space-y-6"
+              >
+                {/* Barra de Búsqueda */}
+                <div className="bg-white p-6 rounded-[32px] shadow-xl border border-slate-100 flex flex-col md:flex-row gap-6 items-center justify-between">
+                  <div className="relative w-full md:w-96 group">
+                    <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-[#B38E5D] transition-colors">
+                      <Search size={20} />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Buscar (Folio CA, Expediente, Dependencia, Oficio)..."
+                      value={searchTermAfectaciones}
+                      onChange={(e) => setSearchTermAfectaciones(e.target.value)}
+                      className="w-full pl-14 pr-6 py-4 bg-slate-50 border-2 border-transparent rounded-[24px] outline-none transition-all font-bold text-slate-700 focus:bg-white focus:border-[#B38E5D]/30 placeholder:text-slate-300"
+                    />
+                  </div>
+                  <button className="flex items-center gap-2 px-6 py-4 bg-slate-50 text-slate-500 font-black uppercase text-xs tracking-widest rounded-2xl hover:bg-slate-100 transition-all">
+                    <Filter size={16} /> Filtros Avanzados
+                  </button>
+                </div>
+
+                {/* Tabla de Resultados de Afectaciones */}
+                <div className="bg-white rounded-[40px] shadow-2xl border border-slate-100 overflow-hidden">
+                  {isLoadingAfectaciones ? (
+                    <div className="p-20 text-center text-slate-400 font-bold uppercase tracking-widest animate-pulse">
+                      Cargando afectaciones presupuestales...
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left min-w-[1100px]">
+                        <thead>
+                          <tr className="border-b border-slate-50 bg-slate-50/50 uppercase text-[10px] font-black tracking-widest text-slate-400">
+                            <th className="px-8 py-6">Folio CA</th>
+                            <th className="px-6 py-6">Expediente</th>
+                            <th className="px-6 py-6">Dependencia</th>
+                            <th className="px-6 py-6">Fuente</th>
+                            <th className="px-6 py-6 text-right">Importe</th>
+                            <th className="px-6 py-6">Estatus</th>
+                            <th className="px-8 py-6 text-center">Acciones</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-50">
+                          {filteredAfectaciones.length > 0 ? (
+                            filteredAfectaciones.map((record, idx) => (
+                              <tr key={idx} className="group hover:bg-slate-50/80 transition-colors">
+                                <td className="px-8 py-6 font-mono font-black text-[#B38E5D]">
+                                  {record.folioCa || `CA-2026-${1000 + idx}`}
+                                </td>
+                                <td className="px-6 py-6 font-mono text-xs font-bold text-slate-500">
+                                  {record.expediente?.folioExpediente || 'Sin Expediente'}
+                                </td>
+                                <td className="px-6 py-6 font-bold text-slate-700">
+                                  {record.expediente?.dependencia || 'Sin Asignar'}
+                                </td>
+                                <td className="px-6 py-6">
+                                  <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase bg-[#B38E5D]/10 text-[#B38E5D] border border-[#B38E5D]/20">
+                                    {record.fuenteFinanciamiento || 'N/A'}
+                                  </span>
+                                </td>
+                                <td className="px-6 py-6 text-right font-black text-slate-900">
+                                  {new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(record.importeSuficiencia || 0)}
+                                </td>
+                                <td className="px-6 py-6">
+                                  <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border ${
+                                    record.estatus === 'Suficiencia Aprobada'
+                                      ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                      : record.estatus === 'En Revisión'
+                                      ? 'bg-amber-50 text-amber-600 border-amber-100'
+                                      : record.estatus === 'Rechazado'
+                                      ? 'bg-rose-50 text-rose-600 border-rose-100'
+                                      : 'bg-slate-100 text-slate-500 border-slate-200'
+                                  }`}>
+                                    {record.estatus || 'Pendiente'}
+                                  </span>
+                                </td>
+                                <td className="px-8 py-6 text-center">
+                                  <button 
+                                    onClick={() => handleVerDetalleAfectacion(record)} 
+                                    className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-[#9D2449] rounded-xl text-[10px] font-black uppercase hover:bg-[#9D2449] hover:text-white hover:border-[#9D2449] transition-all shadow-sm mx-auto"
+                                  >
+                                    <Eye size={14} /> Detalle
+                                  </button>
+                                </td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan={7} className="px-10 py-10 text-center text-slate-400 font-bold uppercase text-xs tracking-widest italic">
+                                No se encontraron afectaciones presupuestales.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                  
+                  {/* Footer de la Tabla */}
+                  <div className="p-6 bg-slate-50/30 border-t border-slate-100 flex justify-between items-center text-slate-400">
+                    <p className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                      <Receipt size={14} /> Mostrando {filteredAfectaciones.length} afectaciones registradas
+                    </p>
+                    <div className="flex gap-2">
+                      <button className="p-2 hover:bg-white rounded-lg transition-colors"><ChevronRight size={16} className="rotate-180" /></button>
+                      <button className="p-2 hover:bg-white rounded-lg transition-colors"><ChevronRight size={16} /></button>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* VISTA: DETALLE DE AFECTACIÓN */}
+            {currentView === 'budget-detail' && selectedAfectacion && (
+              <motion.div
+                key="detalle-afectacion"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <DetalleAfectacion 
+                  afectacion={selectedAfectacion} 
+                  onBack={handleVolverConsultaAfectacion} 
                 />
               </motion.div>
             )}

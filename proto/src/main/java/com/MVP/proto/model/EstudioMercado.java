@@ -17,6 +17,11 @@ public class EstudioMercado {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id; // <--- ESTE CAMPO DEBE EXISTIR
 
+    // === RELACIÓN CON EXPEDIENTE MAESTRO ===
+    @ManyToOne
+    @JoinColumn(name = "expediente_id")
+    private Expediente expediente;
+
     private String folio; // <--- ESTE CAMPO DEBE EXISTIR
     
     private String fechaIngreso; // <--- ESTE CAMPO DEBE EXISTIR PARA EL REPOSITORIO
