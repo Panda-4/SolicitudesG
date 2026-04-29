@@ -16,6 +16,7 @@ import FormularioAdjudicacion from './components/FormularioAdjudicacion';
 import DetalleAdjudicacion from './components/DetalleAdjudicacion';
 import PanelControl from './components/PanelControl';
 import DetalleExpedienteCompleto from './components/DetalleExpedienteCompleto';
+import AgendaProcedimientos from './components/AgendaProcedimientos';
 
 function App() {
   const [currentView, setCurrentView] = useState('register');
@@ -896,6 +897,19 @@ function App() {
                   item={selectedTrazabilidadItem}
                   onBack={handleVolverDashboard}
                 />
+              </motion.div>
+            )}
+
+            {/* VISTA: AGENDA DE PROCEDIMIENTOS (Panel de Control) */}
+            {currentView === 'dashboard-reports' && (
+              <motion.div
+                key="dashboard-reports"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.3 }}
+              >
+                <AgendaProcedimientos />
               </motion.div>
             )}
 
