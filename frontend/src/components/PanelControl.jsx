@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Building2, FolderOpen, ClipboardCheck, DollarSign, Gavel, Award,
   ChevronDown, ChevronRight, Search, TrendingUp, CheckCircle2,
-  Clock, FileText, Receipt, ExternalLink, Calendar
+  Clock, FileText, Receipt, ExternalLink, Calendar, Eye
 } from 'lucide-react';
 
 const ETAPAS = [
@@ -14,7 +14,7 @@ const ETAPAS = [
   { key: 'Adjudicación', icon: Award, color: '#059669' },
 ];
 
-const PanelControl = () => {
+const PanelControl = ({ onVerDetalle }) => {
   const [trazabilidad, setTrazabilidad] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -312,6 +312,15 @@ const PanelControl = () => {
                               </div>
                             )) : <p className="text-xs text-slate-400 italic font-bold">Sin registros</p>}
                           </div>
+                        </div>
+
+                        {/* Botón Ver Detalle Completo */}
+                        <div className="pt-4 border-t border-slate-100 flex justify-center">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); onVerDetalle && onVerDetalle(item); }}
+                            className="flex items-center gap-2 px-6 py-3 bg-[#9D2449] text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-[#7a1c39] transition-all shadow-lg shadow-[#9D2449]/20">
+                            <Eye size={16} /> Ver Detalle Completo del Expediente
+                          </button>
                         </div>
                       </div>
                     </motion.div>

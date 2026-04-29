@@ -15,6 +15,7 @@ import DetalleProcedimiento from './components/DetalleProcedimiento';
 import FormularioAdjudicacion from './components/FormularioAdjudicacion';
 import DetalleAdjudicacion from './components/DetalleAdjudicacion';
 import PanelControl from './components/PanelControl';
+import DetalleExpedienteCompleto from './components/DetalleExpedienteCompleto';
 
 function App() {
   const [currentView, setCurrentView] = useState('register');
@@ -40,6 +41,9 @@ function App() {
   const [isLoadingAdjudicaciones, setIsLoadingAdjudicaciones] = useState(false);
   const [searchTermAdjudicaciones, setSearchTermAdjudicaciones] = useState('');
   const [selectedAdjudicacion2, setSelectedAdjudicacion2] = useState(null);
+
+  // === ESTADO PARA DETALLE COMPLETO DE EXPEDIENTE (TRAZABILIDAD) ===
+  const [selectedTrazabilidadItem, setSelectedTrazabilidadItem] = useState(null);
 
   // Usuario simulado
   const currentUser = {
@@ -154,6 +158,17 @@ function App() {
   const handleVolverConsultaAdjudicacion2 = () => {
     setSelectedAdjudicacion2(null);
     setCurrentView('adjudication-query');
+  };
+
+  // Funciones para manejar detalle completo de expediente (desde Panel de Control)
+  const handleVerDetalleExpedienteCompleto = (item) => {
+    setSelectedTrazabilidadItem(item);
+    setCurrentView('dashboard-detail');
+  };
+
+  const handleVolverDashboard = () => {
+    setSelectedTrazabilidadItem(null);
+    setCurrentView('dashboard');
   };
 
   // Efecto para cargar datos automáticamente según la vista
@@ -864,7 +879,23 @@ function App() {
                 exit={{ opacity: 0, scale: 0.98 }}
                 transition={{ duration: 0.3 }}
               >
-                <PanelControl />
+                <PanelControl onVerDetalle={handleVerDetalleExpedienteCompleto} />
+              </motion.div>
+            )}
+
+            {/* VISTA: DETALLE COMPLETO DE EXPEDIENTE */}
+            {currentView === 'dashboard-detail' && selectedTrazabilidadItem && (
+              <motion.div
+                key="dashboard-detail"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <DetalleExpedienteCompleto
+                  item={selectedTrazabilidadItem}
+                  onBack={handleVolverDashboard}
+                />
               </motion.div>
             )}
 
