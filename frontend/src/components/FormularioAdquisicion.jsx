@@ -3,7 +3,7 @@ import axios from 'axios';
 import { motion } from 'framer-motion';
 import {
   Calendar, CheckCircle2, ChevronDown, Clock, FolderOpen,
-  Gavel, Link2, Megaphone, RotateCcw, Hash
+  Gavel, Link2, Megaphone, RotateCcw, Hash, DollarSign, Receipt
 } from 'lucide-react';
 
 const MODALIDADES = [
@@ -40,9 +40,11 @@ const initCronograma = () =>
 
 const FormularioAdquisicion = ({ onSuccess }) => {
   const [expedientes, setExpedientes] = useState([]);
+  const [afectaciones, setAfectaciones] = useState([]);
   const [selectedExpedienteId, setSelectedExpedienteId] = useState('');
   const [mostrarDetalles, setMostrarDetalles] = useState(false);
   const expInfo = expedientes.find(e => e.id === parseInt(selectedExpedienteId));
+  const afectacionesDelExp = afectaciones.filter(a => a.expediente?.id === parseInt(selectedExpedienteId));
 
   const [formData, setFormData] = useState({
     noProcedimiento: '',
@@ -57,9 +59,13 @@ const FormularioAdquisicion = ({ onSuccess }) => {
   useEffect(() => {
     const cargar = async () => {
       try {
-        const res = await axios.get('http://localhost:8080/api/expedientes');
-        setExpedientes(res.data);
-      } catch (e) { console.log("No se pudieron cargar expedientes."); }
+        const [resExp, resAfec] = await Promise.all([
+          axios.get('http://localhost:8080/api/expedientes'),
+          axios.get('http://localhost:8080/api/afectaciones/lista'),
+        ]);
+        setExpedientes(resExp.data);
+        setAfectaciones(resAfec.data);
+      } catch (e) { console.log("Error cargando datos."); }
     };
     cargar();
   }, []);
@@ -183,27 +189,75 @@ const FormularioAdquisicion = ({ onSuccess }) => {
               Vincula este procedimiento al expediente maestro de adquisiciones.
             </p>
 
-            {/* Detalles del Expediente (Collapsible) */}
+            {/* Detalles del Expediente + Afectaciones (Collapsible) */}
             {mostrarDetalles && expInfo && (
               <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}
-                className="mt-4 p-5 bg-white rounded-2xl border border-slate-100 shadow-sm">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div>
-                    <p className="text-[10px] font-bold uppercase text-slate-400">Folio</p>
-                    <p className="font-black text-[#9D2449]">{expInfo.folioExpediente}</p>
+                className="mt-4 space-y-4">
+                
+                {/* Info del Expediente */}
+                <div className="p-5 bg-white rounded-2xl border border-slate-100 shadow-sm">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3 flex items-center gap-2">
+                    <FolderOpen size={12} /> Datos del Expediente
+                  </p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase text-slate-400">Folio</p>
+                      <p className="font-black text-[#9D2449]">{expInfo.folioExpediente}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold uppercase text-slate-400">Dependencia</p>
+                      <p className="font-bold text-slate-700 truncate" title={expInfo.dependencia}>{expInfo.dependencia || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold uppercase text-slate-400">Estatus</p>
+                      <p className="font-bold text-slate-700">{expInfo.estatusGeneral || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold uppercase text-slate-400">Fecha Creación</p>
+                      <p className="font-bold text-slate-700">{expInfo.fechaCreacion || 'N/A'}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-[10px] font-bold uppercase text-slate-400">Dependencia</p>
-                    <p className="font-bold text-slate-700 truncate" title={expInfo.dependencia}>{expInfo.dependencia || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold uppercase text-slate-400">Estatus</p>
-                    <p className="font-bold text-slate-700">{expInfo.estatusGeneral || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] font-bold uppercase text-slate-400">Fecha Creación</p>
-                    <p className="font-bold text-slate-700">{expInfo.fechaCreacion || 'N/A'}</p>
-                  </div>
+                </div>
+
+                {/* Afectaciones Presupuestales vinculadas */}
+                <div className="p-5 bg-gradient-to-r from-[#B38E5D]/5 to-white rounded-2xl border border-[#B38E5D]/15 shadow-sm">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-[#B38E5D] mb-3 flex items-center gap-2">
+                    <Receipt size={12} /> Afectaciones Presupuestales (CA) vinculadas
+                  </p>
+                  {afectacionesDelExp.length > 0 ? (
+                    <div className="space-y-3">
+                      {afectacionesDelExp.map((ca) => (
+                        <div key={ca.id} className="flex flex-col md:flex-row md:items-center gap-3 p-4 bg-white rounded-xl border border-slate-100">
+                          <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <div>
+                              <p className="text-[9px] font-bold uppercase text-slate-400">Folio CA</p>
+                              <p className="font-black text-[#B38E5D] font-mono text-sm">{ca.folioCa || 'N/A'}</p>
+                            </div>
+                            <div>
+                              <p className="text-[9px] font-bold uppercase text-slate-400">Importe</p>
+                              <p className="font-black text-slate-800 text-sm">
+                                {ca.importeSuficiencia ? new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(ca.importeSuficiencia) : 'N/A'}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-[9px] font-bold uppercase text-slate-400">Oficio</p>
+                              <p className="font-bold text-slate-600 text-sm truncate">{ca.oficioSuficiencia || 'N/A'}</p>
+                            </div>
+                            <div>
+                              <p className="text-[9px] font-bold uppercase text-slate-400">Estatus</p>
+                              <span className={`inline-block px-2 py-0.5 rounded-full text-[9px] font-black uppercase border ${
+                                ca.estatus === 'Suficiencia Aprobada' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                                ca.estatus === 'Rechazado' ? 'bg-rose-50 text-rose-600 border-rose-100' :
+                                'bg-amber-50 text-amber-600 border-amber-100'
+                              }`}>{ca.estatus || 'Pendiente'}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs font-bold text-slate-400 italic">No hay afectaciones presupuestales registradas para este expediente.</p>
+                  )}
                 </div>
               </motion.div>
             )}
