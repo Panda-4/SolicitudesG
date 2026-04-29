@@ -12,6 +12,8 @@ import FormularioAfectacion from './components/FormularioAfectacion';
 import DetalleAfectacion from './components/DetalleAfectacion';
 import FormularioAdquisicion from './components/FormularioAdquisicion';
 import DetalleProcedimiento from './components/DetalleProcedimiento';
+import FormularioAdjudicacion from './components/FormularioAdjudicacion';
+import DetalleAdjudicacion from './components/DetalleAdjudicacion';
 
 function App() {
   const [currentView, setCurrentView] = useState('register');
@@ -31,6 +33,12 @@ function App() {
   const [isLoadingProcedimientos, setIsLoadingProcedimientos] = useState(false);
   const [searchTermProcedimientos, setSearchTermProcedimientos] = useState('');
   const [selectedProcedimiento, setSelectedProcedimiento] = useState(null);
+
+  // === ESTADO PARA ADJUDICACIONES ===
+  const [adjudicaciones, setAdjudicaciones] = useState([]);
+  const [isLoadingAdjudicaciones, setIsLoadingAdjudicaciones] = useState(false);
+  const [searchTermAdjudicaciones, setSearchTermAdjudicaciones] = useState('');
+  const [selectedAdjudicacion2, setSelectedAdjudicacion2] = useState(null);
 
   // Usuario simulado
   const currentUser = {
@@ -89,6 +97,20 @@ function App() {
     }
   };
 
+  // === FUNCIONES PARA ADJUDICACIONES ===
+  const fetchAdjudicaciones = async () => {
+    setIsLoadingAdjudicaciones(true);
+    try {
+      const response = await axios.get('http://localhost:8080/api/adjudicaciones/lista');
+      setAdjudicaciones(response.data);
+    } catch (error) {
+      console.error("Error cargando adjudicaciones:", error);
+      setAdjudicaciones([]);
+    } finally {
+      setIsLoadingAdjudicaciones(false);
+    }
+  };
+
   // Funciones para manejar la vista de detalle (Estudios)
   const handleVerDetalle = (record) => {
     setSelectedRecord(record);
@@ -122,6 +144,17 @@ function App() {
     setCurrentView('procurement-query');
   };
 
+  // Funciones para manejar detalle (Adjudicaciones)
+  const handleVerDetalleAdjudicacion2 = (record) => {
+    setSelectedAdjudicacion2(record);
+    setCurrentView('adjudication-detail');
+  };
+
+  const handleVolverConsultaAdjudicacion2 = () => {
+    setSelectedAdjudicacion2(null);
+    setCurrentView('adjudication-query');
+  };
+
   // Efecto para cargar datos automáticamente según la vista
   useEffect(() => {
     if (currentView === 'query') {
@@ -132,6 +165,9 @@ function App() {
     }
     if (currentView === 'procurement-query') {
       fetchProcedimientos();
+    }
+    if (currentView === 'adjudication-query') {
+      fetchAdjudicaciones();
     }
   }, [currentView]);
 
@@ -191,6 +227,9 @@ function App() {
              currentView === 'procurement-register' ? 'Registro de Procedimiento' :
              currentView === 'procurement-query' ? 'Consulta de Procedimientos' :
              currentView === 'procurement-detail' ? 'Detalle del Procedimiento' :
+             currentView === 'adjudication-register' ? 'Registro de Adjudicación' :
+             currentView === 'adjudication-query' ? 'Consulta de Adjudicaciones' :
+             currentView === 'adjudication-detail' ? 'Detalle de Adjudicación' :
              'Panel de Control'}
           </h2>
           <div className="flex items-center gap-4">
@@ -656,6 +695,150 @@ function App() {
                 <DetalleProcedimiento
                   procedimiento={selectedProcedimiento}
                   onBack={handleVolverConsultaProcedimiento}
+                />
+              </motion.div>
+            )}
+
+            {/* ============================================= */}
+            {/* VISTAS: ADJUDICACIÓN Y SEGUIMIENTO           */}
+            {/* ============================================= */}
+
+            {/* VISTA: FORMULARIO ADJUDICACIÓN */}
+            {currentView === 'adjudication-register' && (
+              <motion.div
+                key="formulario-adjudicacion"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <FormularioAdjudicacion onSuccess={() => {
+                  fetchAdjudicaciones();
+                  setCurrentView('adjudication-query');
+                }} />
+              </motion.div>
+            )}
+
+            {/* VISTA: CONSULTA ADJUDICACIONES (TABLA) */}
+            {currentView === 'adjudication-query' && (
+              <motion.div
+                key="consulta-adjudicaciones"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                className="space-y-6"
+              >
+                {/* Barra de Búsqueda */}
+                <div className="bg-white p-6 rounded-[32px] shadow-xl border border-slate-100 flex flex-col md:flex-row gap-6 items-center justify-between">
+                  <div className="relative w-full md:w-96 group">
+                    <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-[#9D2449] transition-colors">
+                      <Search size={20} />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Buscar (Folio, Proveedor, RFC, Contrato)..."
+                      value={searchTermAdjudicaciones}
+                      onChange={(e) => setSearchTermAdjudicaciones(e.target.value)}
+                      className="w-full pl-14 pr-6 py-4 bg-slate-50 border-2 border-transparent rounded-[24px] outline-none transition-all font-bold text-slate-700 focus:bg-white focus:border-[#9D2449]/30 placeholder:text-slate-300"
+                    />
+                  </div>
+                  <button className="flex items-center gap-2 px-6 py-4 bg-slate-50 text-slate-500 font-black uppercase text-xs tracking-widest rounded-2xl hover:bg-slate-100 transition-all">
+                    <Filter size={16} /> Filtros
+                  </button>
+                </div>
+
+                {/* Tabla de Resultados */}
+                <div className="bg-white rounded-[40px] shadow-2xl border border-slate-100 overflow-hidden">
+                  {isLoadingAdjudicaciones ? (
+                    <div className="p-20 text-center text-slate-400 font-bold uppercase tracking-widest animate-pulse">
+                      Cargando adjudicaciones...
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left min-w-[1100px]">
+                        <thead>
+                          <tr className="border-b border-slate-50 bg-slate-50/50 uppercase text-[10px] font-black tracking-widest text-slate-400">
+                            <th className="px-8 py-6">Folio Interno</th>
+                            <th className="px-6 py-6">Proveedor</th>
+                            <th className="px-6 py-6">Contrato</th>
+                            <th className="px-6 py-6">Monto Total</th>
+                            <th className="px-6 py-6">Estatus</th>
+                            <th className="px-8 py-6 text-center">Acciones</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-50">
+                          {filteredAdjudicaciones.length > 0 ? (
+                            filteredAdjudicaciones.map((record, idx) => (
+                              <tr key={idx} className="group hover:bg-slate-50/80 transition-colors">
+                                <td className="px-8 py-6 font-mono font-black text-[#9D2449]">
+                                  {record.folioInterno || 'N/A'}
+                                </td>
+                                <td className="px-6 py-6">
+                                  <p className="font-bold text-sm text-slate-700">{record.nombreRazonSocial || 'N/A'}</p>
+                                  <p className="text-[10px] font-mono text-slate-400 uppercase mt-1">{record.rfc || 'S/RFC'}</p>
+                                </td>
+                                <td className="px-6 py-6 font-bold text-slate-600 text-sm">
+                                  {record.numeroContrato || 'N/A'}
+                                </td>
+                                <td className="px-6 py-6 font-black text-emerald-600 text-sm">
+                                  {record.montoTotalConIva ? new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(record.montoTotalConIva) : 'N/A'}
+                                </td>
+                                <td className="px-6 py-6">
+                                  <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border ${
+                                    record.estatus === 'Adjudicado' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                                    record.estatus === 'Formalizado' ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                                    record.estatus === 'Cancelado' ? 'bg-rose-50 text-rose-600 border-rose-100' :
+                                    'bg-amber-50 text-amber-600 border-amber-100'
+                                  }`}>
+                                    {record.estatus || 'Pendiente'}
+                                  </span>
+                                </td>
+                                <td className="px-8 py-6 text-center">
+                                  <button
+                                    onClick={() => handleVerDetalleAdjudicacion2(record)}
+                                    className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-[#B38E5D] rounded-xl text-[10px] font-black uppercase hover:bg-[#B38E5D] hover:text-white hover:border-[#B38E5D] transition-all shadow-sm mx-auto"
+                                  >
+                                    <Eye size={14} /> Detalle
+                                  </button>
+                                </td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan={6} className="px-10 py-10 text-center text-slate-400 font-bold uppercase text-xs tracking-widest italic">
+                                No se encontraron adjudicaciones.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                  <div className="p-6 bg-slate-50/30 border-t border-slate-100 flex justify-between items-center text-slate-400">
+                    <p className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                      <Gavel size={14} /> Mostrando {filteredAdjudicaciones.length} adjudicaciones
+                    </p>
+                    <div className="flex gap-2">
+                      <button className="p-2 hover:bg-white rounded-lg transition-colors"><ChevronRight size={16} className="rotate-180" /></button>
+                      <button className="p-2 hover:bg-white rounded-lg transition-colors"><ChevronRight size={16} /></button>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* VISTA: DETALLE DE ADJUDICACIÓN */}
+            {currentView === 'adjudication-detail' && selectedAdjudicacion2 && (
+              <motion.div
+                key="detalle-adjudicacion"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <DetalleAdjudicacion
+                  adjudicacion={selectedAdjudicacion2}
+                  onBack={handleVolverConsultaAdjudicacion2}
                 />
               </motion.div>
             )}
