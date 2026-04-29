@@ -3,13 +3,15 @@ import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Home, LayoutDashboard, ClipboardCheck, Search, Settings, 
-  LogOut, Building2, Eye, Layers, ChevronRight, Filter, Receipt, DollarSign, KeyRound
+  LogOut, Building2, Eye, Layers, ChevronRight, Filter, Receipt, DollarSign, KeyRound, Gavel
 } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 import FormularioEstudio from './components/FormularioEstudio';
 import DetalleExpediente from './components/DetalleExpediente';
 import FormularioAfectacion from './components/FormularioAfectacion';
 import DetalleAfectacion from './components/DetalleAfectacion';
+import FormularioAdquisicion from './components/FormularioAdquisicion';
+import DetalleProcedimiento from './components/DetalleProcedimiento';
 
 function App() {
   const [currentView, setCurrentView] = useState('register');
@@ -23,6 +25,12 @@ function App() {
   const [isLoadingAfectaciones, setIsLoadingAfectaciones] = useState(false);
   const [searchTermAfectaciones, setSearchTermAfectaciones] = useState('');
   const [selectedAfectacion, setSelectedAfectacion] = useState(null);
+
+  // === ESTADO PARA PROCEDIMIENTOS ADQUISITIVOS ===
+  const [procedimientos, setProcedimientos] = useState([]);
+  const [isLoadingProcedimientos, setIsLoadingProcedimientos] = useState(false);
+  const [searchTermProcedimientos, setSearchTermProcedimientos] = useState('');
+  const [selectedProcedimiento, setSelectedProcedimiento] = useState(null);
 
   // Usuario simulado
   const currentUser = {
@@ -67,6 +75,20 @@ function App() {
     }
   };
 
+  // === FUNCIONES PARA PROCEDIMIENTOS ADQUISITIVOS ===
+  const fetchProcedimientos = async () => {
+    setIsLoadingProcedimientos(true);
+    try {
+      const response = await axios.get('http://localhost:8080/api/procedimientos/lista');
+      setProcedimientos(response.data);
+    } catch (error) {
+      console.error("Error cargando procedimientos:", error);
+      setProcedimientos([]);
+    } finally {
+      setIsLoadingProcedimientos(false);
+    }
+  };
+
   // Funciones para manejar la vista de detalle (Estudios)
   const handleVerDetalle = (record) => {
     setSelectedRecord(record);
@@ -89,6 +111,17 @@ function App() {
     setCurrentView('budget-query');
   };
 
+  // Funciones para manejar detalle (Procedimientos)
+  const handleVerDetalleProcedimiento = (record) => {
+    setSelectedProcedimiento(record);
+    setCurrentView('procurement-detail');
+  };
+
+  const handleVolverConsultaProcedimiento = () => {
+    setSelectedProcedimiento(null);
+    setCurrentView('procurement-query');
+  };
+
   // Efecto para cargar datos automáticamente según la vista
   useEffect(() => {
     if (currentView === 'query') {
@@ -96,6 +129,9 @@ function App() {
     }
     if (currentView === 'budget-query') {
       fetchAfectaciones();
+    }
+    if (currentView === 'procurement-query') {
+      fetchProcedimientos();
     }
   }, [currentView]);
 
@@ -116,6 +152,16 @@ function App() {
            (record.expediente?.folioExpediente || '').toLowerCase().includes(search) ||
            (record.expediente?.dependencia || '').toLowerCase().includes(search) ||
            (record.oficioSuficiencia || '').toLowerCase().includes(search);
+  });
+
+  // Filtrar registros según el buscador (Procedimientos)
+  const filteredProcedimientos = procedimientos.filter(record => {
+    if (!searchTermProcedimientos) return true;
+    const search = searchTermProcedimientos.toLowerCase();
+    return (record.noProcedimiento || '').toLowerCase().includes(search) ||
+           (record.expediente?.folioExpediente || '').toLowerCase().includes(search) ||
+           (record.expediente?.dependencia || '').toLowerCase().includes(search) ||
+           (record.modalidadProcedimiento || '').toLowerCase().includes(search);
   });
 
   return (
@@ -142,6 +188,9 @@ function App() {
              currentView === 'budget-affectation' ? 'Afectación Presupuestal' :
              currentView === 'budget-query' ? 'Consulta de Suficiencia' :
              currentView === 'budget-detail' ? 'Detalle de Afectación' :
+             currentView === 'procurement-register' ? 'Registro de Procedimiento' :
+             currentView === 'procurement-query' ? 'Consulta de Procedimientos' :
+             currentView === 'procurement-detail' ? 'Detalle del Procedimiento' :
              'Panel de Control'}
           </h2>
           <div className="flex items-center gap-4">
@@ -455,6 +504,158 @@ function App() {
                 <DetalleAfectacion 
                   afectacion={selectedAfectacion} 
                   onBack={handleVolverConsultaAfectacion} 
+                />
+              </motion.div>
+            )}
+
+            {/* ============================================= */}
+            {/* VISTAS: ADQUISICIONES Y CONTRATACIÓN         */}
+            {/* ============================================= */}
+
+            {/* VISTA: FORMULARIO PROCEDIMIENTO */}
+            {currentView === 'procurement-register' && (
+              <motion.div
+                key="formulario-procedimiento"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <FormularioAdquisicion onSuccess={() => {
+                  fetchProcedimientos();
+                  setCurrentView('procurement-query');
+                }} />
+              </motion.div>
+            )}
+
+            {/* VISTA: CONSULTA PROCEDIMIENTOS (TABLA) */}
+            {currentView === 'procurement-query' && (
+              <motion.div
+                key="consulta-procedimientos"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                className="space-y-6"
+              >
+                {/* Barra de Búsqueda */}
+                <div className="bg-white p-6 rounded-[32px] shadow-xl border border-slate-100 flex flex-col md:flex-row gap-6 items-center justify-between">
+                  <div className="relative w-full md:w-96 group">
+                    <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-[#9D2449] transition-colors">
+                      <Search size={20} />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Buscar (No. Procedimiento, Expediente, Modalidad)..."
+                      value={searchTermProcedimientos}
+                      onChange={(e) => setSearchTermProcedimientos(e.target.value)}
+                      className="w-full pl-14 pr-6 py-4 bg-slate-50 border-2 border-transparent rounded-[24px] outline-none transition-all font-bold text-slate-700 focus:bg-white focus:border-[#9D2449]/30 placeholder:text-slate-300"
+                    />
+                  </div>
+                  <button className="flex items-center gap-2 px-6 py-4 bg-slate-50 text-slate-500 font-black uppercase text-xs tracking-widest rounded-2xl hover:bg-slate-100 transition-all">
+                    <Filter size={16} /> Filtros Avanzados
+                  </button>
+                </div>
+
+                {/* Tabla de Resultados */}
+                <div className="bg-white rounded-[40px] shadow-2xl border border-slate-100 overflow-hidden">
+                  {isLoadingProcedimientos ? (
+                    <div className="p-20 text-center text-slate-400 font-bold uppercase tracking-widest animate-pulse">
+                      Cargando procedimientos adquisitivos...
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left min-w-[1100px]">
+                        <thead>
+                          <tr className="border-b border-slate-50 bg-slate-50/50 uppercase text-[10px] font-black tracking-widest text-slate-400">
+                            <th className="px-8 py-6">No. Procedimiento</th>
+                            <th className="px-6 py-6">Expediente</th>
+                            <th className="px-6 py-6">Modalidad</th>
+                            <th className="px-6 py-6">Medio</th>
+                            <th className="px-6 py-6">Fecha Fallo</th>
+                            <th className="px-6 py-6">Estatus</th>
+                            <th className="px-8 py-6 text-center">Acciones</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-50">
+                          {filteredProcedimientos.length > 0 ? (
+                            filteredProcedimientos.map((record, idx) => (
+                              <tr key={idx} className="group hover:bg-slate-50/80 transition-colors">
+                                <td className="px-8 py-6 font-mono font-black text-[#9D2449]">
+                                  {record.noProcedimiento || 'N/A'}
+                                </td>
+                                <td className="px-6 py-6 font-mono text-xs font-bold text-slate-500">
+                                  {record.expediente?.folioExpediente || 'Sin Expediente'}
+                                </td>
+                                <td className="px-6 py-6">
+                                  <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase bg-[#9D2449]/10 text-[#9D2449] border border-[#9D2449]/20">
+                                    {record.modalidadProcedimiento || 'N/A'}
+                                  </span>
+                                </td>
+                                <td className="px-6 py-6 font-bold text-slate-600 text-sm">
+                                  {record.medioPublicacion || 'N/A'}
+                                </td>
+                                <td className="px-6 py-6 font-bold text-slate-600 text-sm">
+                                  {record.fechaFallo || '—'}
+                                </td>
+                                <td className="px-6 py-6">
+                                  <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase border ${
+                                    record.estatus === 'Adjudicado'
+                                      ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                      : record.estatus === 'En Proceso' || record.estatus === 'Publicado'
+                                      ? 'bg-amber-50 text-amber-600 border-amber-100'
+                                      : record.estatus === 'Cancelado' || record.estatus === 'Desierto'
+                                      ? 'bg-rose-50 text-rose-600 border-rose-100'
+                                      : 'bg-slate-100 text-slate-500 border-slate-200'
+                                  }`}>
+                                    {record.estatus || 'Pendiente'}
+                                  </span>
+                                </td>
+                                <td className="px-8 py-6 text-center">
+                                  <button
+                                    onClick={() => handleVerDetalleProcedimiento(record)}
+                                    className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-[#9D2449] rounded-xl text-[10px] font-black uppercase hover:bg-[#9D2449] hover:text-white hover:border-[#9D2449] transition-all shadow-sm mx-auto"
+                                  >
+                                    <Eye size={14} /> Detalle
+                                  </button>
+                                </td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan={7} className="px-10 py-10 text-center text-slate-400 font-bold uppercase text-xs tracking-widest italic">
+                                No se encontraron procedimientos adquisitivos.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                  <div className="p-6 bg-slate-50/30 border-t border-slate-100 flex justify-between items-center text-slate-400">
+                    <p className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                      <Gavel size={14} /> Mostrando {filteredProcedimientos.length} procedimientos registrados
+                    </p>
+                    <div className="flex gap-2">
+                      <button className="p-2 hover:bg-white rounded-lg transition-colors"><ChevronRight size={16} className="rotate-180" /></button>
+                      <button className="p-2 hover:bg-white rounded-lg transition-colors"><ChevronRight size={16} /></button>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* VISTA: DETALLE DEL PROCEDIMIENTO */}
+            {currentView === 'procurement-detail' && selectedProcedimiento && (
+              <motion.div
+                key="detalle-procedimiento"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <DetalleProcedimiento
+                  procedimiento={selectedProcedimiento}
+                  onBack={handleVolverConsultaProcedimiento}
                 />
               </motion.div>
             )}
