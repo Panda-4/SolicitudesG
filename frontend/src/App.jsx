@@ -14,6 +14,7 @@ import FormularioAdquisicion from './components/FormularioAdquisicion';
 import DetalleProcedimiento from './components/DetalleProcedimiento';
 import FormularioAdjudicacion from './components/FormularioAdjudicacion';
 import DetalleAdjudicacion from './components/DetalleAdjudicacion';
+import PanelControl from './components/PanelControl';
 
 function App() {
   const [currentView, setCurrentView] = useState('register');
@@ -854,19 +855,16 @@ function App() {
               </motion.div>
             )}
 
-            {/* VISTA: DASHBOARD (Placeholder) */}
+            {/* VISTA: PANEL DE CONTROL — TRAZABILIDAD */}
             {currentView === 'dashboard' && (
               <motion.div
                 key="dashboard"
-                initial={{ opacity: 0, scale: 0.95 }}
+                initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="flex items-center justify-center h-full text-slate-400"
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.3 }}
               >
-                <div className="text-center space-y-4">
-                  <LayoutDashboard size={64} className="mx-auto text-slate-200" />
-                  <h1 className="text-4xl font-black uppercase tracking-widest">Panel de Control</h1>
-                  <p className="font-bold">Próximamente: Gráficas y Estadísticas</p>
-                </div>
+                <PanelControl />
               </motion.div>
             )}
 
