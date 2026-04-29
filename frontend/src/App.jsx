@@ -200,6 +200,17 @@ function App() {
            (record.modalidadProcedimiento || '').toLowerCase().includes(search);
   });
 
+  // Filtrar registros según el buscador (Adjudicaciones)
+  const filteredAdjudicaciones = adjudicaciones.filter(record => {
+    if (!searchTermAdjudicaciones) return true;
+    const search = searchTermAdjudicaciones.toLowerCase();
+    return (record.folioInterno || '').toLowerCase().includes(search) ||
+           (record.expediente?.folioExpediente || '').toLowerCase().includes(search) ||
+           (record.nombreRazonSocial || '').toLowerCase().includes(search) ||
+           (record.rfc || '').toLowerCase().includes(search) ||
+           (record.numeroContrato || '').toLowerCase().includes(search);
+  });
+
   return (
     <div className="flex min-h-screen font-sans bg-[#F8FAFC] text-slate-800">
       
