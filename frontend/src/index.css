@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+/* Estilos globales básicos */
+body {
+  background-color: #f8fafc; /* Gris muy claro */
+  color: #1e293b; /* Texto oscuro profesional */
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}

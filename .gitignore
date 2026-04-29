@@ -1,0 +1,35 @@
+# === IDE / Editor ===
+.vscode/
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# === OS ===
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# === Frontend ===
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+*.local
+
+# === Backend (Spring Boot / Maven) ===
+proto/target/
+proto/.mvn/wrapper/maven-wrapper.jar
+*.class
+*.jar
+*.war
+
+# === Logs ===
+*.log
+npm-debug.log*
+
+# === Executables / Installers ===
+*.exe
+
+# === Environment / Secrets ===
+.env
+.env.*
