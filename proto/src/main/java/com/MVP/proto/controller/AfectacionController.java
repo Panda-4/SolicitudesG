@@ -29,11 +29,7 @@ public class AfectacionController {
         // Guardar para obtener el ID
         AfectacionPresupuestal nueva = afectacionRepo.save(afectacion);
         
-        // Generar folio CA automático si no tiene
-        if (nueva.getFolioCa() == null || nueva.getFolioCa().isEmpty()) {
-            nueva.setFolioCa("CA-2026-" + nueva.getId());
-            afectacionRepo.save(nueva);
-        }
+        // Eliminamos la generación automática de folio para que se respete el ingresado por el usuario
 
         return ResponseEntity.ok(nueva);
     }

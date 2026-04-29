@@ -40,8 +40,11 @@ const FormularioAfectacion = ({ onSuccess }) => {
   const [consolidado, setConsolidado] = useState(false);
   const [expedientes, setExpedientes] = useState([]);
   const [selectedExpedienteId, setSelectedExpedienteId] = useState('');
+  const [mostrarDetalles, setMostrarDetalles] = useState(false);
+  const expSeleccionadoInfo = expedientes.find(e => e.id === parseInt(selectedExpedienteId));
 
   const [formData, setFormData] = useState({
+    folioCa: '',
     testigoSocial: '',
     tipoGasto: '',
     fuenteFinanciamiento: '',
@@ -75,6 +78,10 @@ const FormularioAfectacion = ({ onSuccess }) => {
       alert('⚠️ Debes seleccionar un Expediente para vincular esta afectación.');
       return;
     }
+    if (!formData.folioCa) {
+      alert('⚠️ Debes ingresar manualmente el Folio CA.');
+      return;
+    }
 
     try {
       const datosAEnviar = {
@@ -90,7 +97,7 @@ const FormularioAfectacion = ({ onSuccess }) => {
       
       // Limpiar formulario
       setFormData({
-        testigoSocial: '', tipoGasto: '', fuenteFinanciamiento: '',
+        folioCa: '', testigoSocial: '', tipoGasto: '', fuenteFinanciamiento: '',
         importeSuficiencia: '', oficioSuficiencia: '', claveVerificacion: '',
         descripcionClave: '', unidadMedida: '', estatus: 'Pendiente de Validación',
       });
@@ -137,22 +144,42 @@ const FormularioAfectacion = ({ onSuccess }) => {
                 <p className="font-bold uppercase text-[10px] tracking-[0.3em] ml-12 text-slate-400">Módulo de Suficiencia y Control Presupuestal</p>
               </div>
 
-              {/* Folio Flotante */}
-              <div className="border-2 p-5 rounded-[32px] shadow-lg min-w-[280px] group transition-all bg-white border-[#B38E5D] focus-within:border-[#9D2449] shadow-[#B38E5D]/10">
-                <p className="text-[10px] font-black uppercase tracking-widest mb-1 text-center text-[#B38E5D]">Folio CA (Auto)</p>
-                <p className="w-full text-2xl font-black text-center font-mono bg-transparent outline-none text-[#9D2449]">CA-2026-XXXX</p>
+              {/* Folio Flotante (Manual) */}
+              <div className="border-2 p-4 rounded-[32px] shadow-lg min-w-[280px] group transition-all bg-white border-[#B38E5D] focus-within:border-[#9D2449] shadow-[#B38E5D]/10">
+                <p className="text-[10px] font-black uppercase tracking-widest mb-1 text-center text-[#B38E5D]">Folio CA</p>
+                <input
+                  type="text"
+                  value={formData.folioCa}
+                  onChange={handleChange('folioCa')}
+                  placeholder="Ej: CA-2026-0001"
+                  className="w-full text-2xl font-black text-center font-mono bg-transparent outline-none text-[#9D2449] placeholder:text-[#9D2449]/30"
+                />
               </div>
             </div>
 
             {/* === SELECTOR DE EXPEDIENTE === */}
             <div className="mb-12 p-6 bg-gradient-to-r from-[#9D2449]/5 to-[#B38E5D]/5 rounded-[32px] border-2 border-dashed border-[#9D2449]/15">
-              <label className={labelClass}>
-                <FolderOpen size={16} className="text-[#9D2449]" /> Expediente Vinculado (Obligatorio)
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label className={labelClass}>
+                  <FolderOpen size={16} className="text-[#9D2449]" /> Expediente Vinculado (Obligatorio)
+                </label>
+                {selectedExpedienteId && (
+                  <button
+                    type="button"
+                    onClick={() => setMostrarDetalles(!mostrarDetalles)}
+                    className="text-[10px] font-black uppercase tracking-widest text-[#B38E5D] hover:text-[#9D2449] flex items-center gap-1 transition-all"
+                  >
+                    {mostrarDetalles ? 'Ocultar Detalles' : 'Consultar Información'}
+                  </button>
+                )}
+              </div>
               <div className="relative">
                 <select
                   value={selectedExpedienteId}
-                  onChange={(e) => setSelectedExpedienteId(e.target.value)}
+                  onChange={(e) => {
+                    setSelectedExpedienteId(e.target.value);
+                    if (!e.target.value) setMostrarDetalles(false);
+                  }}
                   className={`${inputClass} appearance-none cursor-pointer bg-white border-[#9D2449]/20 focus:border-[#9D2449]/50`}
                 >
                   <option value="">Seleccione un Expediente...</option>
@@ -167,6 +194,34 @@ const FormularioAfectacion = ({ onSuccess }) => {
               <p className="text-[10px] font-bold text-slate-400 mt-2 ml-2 italic">
                 Este expediente fue creado automáticamente al registrar un Estudio de Mercado.
               </p>
+
+              {/* === DETALLES DEL EXPEDIENTE (COLLAPSIBLE) === */}
+              {mostrarDetalles && expSeleccionadoInfo && (
+                <motion.div 
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  className="mt-4 p-5 bg-white rounded-2xl border border-slate-100 shadow-sm"
+                >
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase text-slate-400">Folio</p>
+                      <p className="font-black text-[#9D2449]">{expSeleccionadoInfo.folioExpediente}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold uppercase text-slate-400">Dependencia</p>
+                      <p className="font-bold text-slate-700 truncate" title={expSeleccionadoInfo.dependencia}>{expSeleccionadoInfo.dependencia || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold uppercase text-slate-400">Estatus</p>
+                      <p className="font-bold text-slate-700">{expSeleccionadoInfo.estatusGeneral || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold uppercase text-slate-400">Fecha Creación</p>
+                      <p className="font-bold text-slate-700">{expSeleccionadoInfo.fechaCreacion || 'N/A'}</p>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
             </div>
 
             <form className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-10">

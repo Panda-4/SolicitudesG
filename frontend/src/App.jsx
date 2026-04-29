@@ -100,19 +100,23 @@ function App() {
   }, [currentView]);
 
   // Filtrar registros según el buscador (Estudios)
-  const filteredRecords = records.filter(record => 
-    record.dependencia?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    record.folio?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    record.giro?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredRecords = records.filter(record => {
+    if (!searchTerm) return true;
+    const search = searchTerm.toLowerCase();
+    return (record.dependencia || '').toLowerCase().includes(search) ||
+           (record.folio || '').toLowerCase().includes(search) ||
+           (record.giro || '').toLowerCase().includes(search);
+  });
 
   // Filtrar registros según el buscador (Afectaciones)
-  const filteredAfectaciones = afectaciones.filter(record => 
-    record.folioCa?.toLowerCase().includes(searchTermAfectaciones.toLowerCase()) ||
-    record.expediente?.folioExpediente?.toLowerCase().includes(searchTermAfectaciones.toLowerCase()) ||
-    record.expediente?.dependencia?.toLowerCase().includes(searchTermAfectaciones.toLowerCase()) ||
-    record.oficioSuficiencia?.toLowerCase().includes(searchTermAfectaciones.toLowerCase())
-  );
+  const filteredAfectaciones = afectaciones.filter(record => {
+    if (!searchTermAfectaciones) return true;
+    const search = searchTermAfectaciones.toLowerCase();
+    return (record.folioCa || '').toLowerCase().includes(search) ||
+           (record.expediente?.folioExpediente || '').toLowerCase().includes(search) ||
+           (record.expediente?.dependencia || '').toLowerCase().includes(search) ||
+           (record.oficioSuficiencia || '').toLowerCase().includes(search);
+  });
 
   return (
     <div className="flex min-h-screen font-sans bg-[#F8FAFC] text-slate-800">
@@ -159,8 +163,11 @@ function App() {
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.3 }}
               >
-                {/* Pasamos fetchRecords como onSuccess para refrescar la tabla al guardar */}
-                <FormularioEstudio onSuccess={fetchRecords} />
+                {/* Pasamos fetchRecords como onSuccess para refrescar la tabla y cambiar de vista al guardar */}
+                <FormularioEstudio onSuccess={() => {
+                  fetchRecords();
+                  setCurrentView('query');
+                }} />
               </motion.div>
             )}
 
@@ -311,7 +318,10 @@ function App() {
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.3 }}
               >
-                <FormularioAfectacion onSuccess={fetchAfectaciones} />
+                <FormularioAfectacion onSuccess={() => {
+                  fetchAfectaciones();
+                  setCurrentView('budget-query');
+                }} />
               </motion.div>
             )}
 
