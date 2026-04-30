@@ -17,8 +17,14 @@ import DetalleAdjudicacion from './components/DetalleAdjudicacion';
 import PanelControl from './components/PanelControl';
 import DetalleExpedienteCompleto from './components/DetalleExpedienteCompleto';
 import AgendaProcedimientos from './components/AgendaProcedimientos';
+import LoginScreen from './components/LoginScreen';
+import GestionUsuarios from './components/GestionUsuarios';
+import { login as authLogin, logout as authLogout, getUser, isAuthenticated, hasPermission, setupAxiosInterceptors } from './services/authService';
 
 function App() {
+  // === ESTADO DE AUTENTICACIÓN ===
+  const [isLoggedIn, setIsLoggedIn] = useState(isAuthenticated());
+
   const [currentView, setCurrentView] = useState('register');
   const [records, setRecords] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -46,19 +52,38 @@ function App() {
   // === ESTADO PARA DETALLE COMPLETO DE EXPEDIENTE (TRAZABILIDAD) ===
   const [selectedTrazabilidadItem, setSelectedTrazabilidadItem] = useState(null);
 
-  // Usuario simulado
-  const currentUser = {
-    name: 'Administrador',
-    role: 'Administrador',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alejandro'
-  };
+  // === USUARIO REAL DESDE JWT ===
+  const userData = getUser();
+  const currentUser = userData ? {
+    name: userData.nombreCompleto,
+    role: userData.rol,
+    avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${userData.username}`
+  } : { name: 'Invitado', role: 'Sin rol', avatar: '' };
 
-  const hasPermission = (permission) => true; 
+  // === CONFIGURAR AXIOS INTERCEPTORS AL MONTAR ===
+  useEffect(() => {
+    setupAxiosInterceptors(() => {
+      setIsLoggedIn(false);
+    });
+  }, []);
 
-  const handleLogout = () => {
-    console.log("Cerrando sesión...");
+  // === HANDLERS DE AUTH ===
+  const handleLogin = async (username, password) => {
+    await authLogin(username, password);
+    setIsLoggedIn(true);
     setCurrentView('dashboard');
   };
+
+  const handleLogout = () => {
+    authLogout();
+    setIsLoggedIn(false);
+    setCurrentView('register');
+  };
+
+  // === SI NO ESTÁ LOGUEADO, MOSTRAR LOGIN ===
+  if (!isLoggedIn) {
+    return <LoginScreen onLogin={handleLogin} />;
+  }
 
   // Función para cargar los registros desde Java
   const fetchRecords = async () => {
@@ -913,6 +938,18 @@ function App() {
               </motion.div>
             )}
 
+            {/* VISTA: GESTIÓN DE USUARIOS (Solo ADMIN) */}
+            {currentView === 'settings' && (
+              <motion.div
+                key="settings"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.3 }}
+              >
+                <GestionUsuarios />
+              </motion.div>
+            )}
           </AnimatePresence>
         </div>
       </main>
