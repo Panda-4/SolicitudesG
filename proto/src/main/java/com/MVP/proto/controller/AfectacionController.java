@@ -6,6 +6,9 @@ import com.MVP.proto.service.AuditService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.http.HttpStatus;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -24,6 +27,10 @@ public class AfectacionController {
     // POST — Guardar
     @PostMapping
     public ResponseEntity<AfectacionPresupuestal> guardarAfectacion(@RequestBody AfectacionPresupuestal afectacion) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null) {
+            afectacion.setCreadorUsername(auth.getName());
+        }
         if (afectacion.getFechaRegistro() == null || afectacion.getFechaRegistro().isEmpty()) {
             afectacion.setFechaRegistro(LocalDate.now().toString());
         }
@@ -50,19 +57,38 @@ public class AfectacionController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // PUT — Editar (Solo ADMIN)
+    // PUT — Editar
     @PutMapping("/{id}")
     public ResponseEntity<?> editarAfectacion(@PathVariable Long id, @RequestBody AfectacionPresupuestal datosNuevos) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isAdmin = auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMINISTRADOR"));
+        String currentUsername = auth != null ? auth.getName() : "";
+
         return afectacionRepo.findById(id).map(existente -> {
+            
+            if (!isAdmin) {
+                // Verificar pertenencia
+                if (!currentUsername.equals(existente.getCreadorUsername())) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body("No tienes permiso para editar este registro.");
+                }
+            }
+
             Object antes = clonarParaAudit(existente);
 
-            if (datosNuevos.getFolioCa() != null) existente.setFolioCa(datosNuevos.getFolioCa());
-            if (datosNuevos.getOficioSuficiencia() != null) existente.setOficioSuficiencia(datosNuevos.getOficioSuficiencia());
-            if (datosNuevos.getMontoAfectado() != null) existente.setMontoAfectado(datosNuevos.getMontoAfectado());
-            if (datosNuevos.getPartidaPresupuestal() != null) existente.setPartidaPresupuestal(datosNuevos.getPartidaPresupuestal());
-            if (datosNuevos.getEstatusSuficiencia() != null) existente.setEstatusSuficiencia(datosNuevos.getEstatusSuficiencia());
-            if (datosNuevos.getFechaSuficiencia() != null) existente.setFechaSuficiencia(datosNuevos.getFechaSuficiencia());
-            if (datosNuevos.getObservaciones() != null) existente.setObservaciones(datosNuevos.getObservaciones());
+            if (isAdmin) {
+                if (datosNuevos.getFolioCa() != null) existente.setFolioCa(datosNuevos.getFolioCa());
+                if (datosNuevos.getOficioSuficiencia() != null) existente.setOficioSuficiencia(datosNuevos.getOficioSuficiencia());
+                if (datosNuevos.getMontoAfectado() != null) existente.setMontoAfectado(datosNuevos.getMontoAfectado());
+                if (datosNuevos.getPartidaPresupuestal() != null) existente.setPartidaPresupuestal(datosNuevos.getPartidaPresupuestal());
+                if (datosNuevos.getEstatusSuficiencia() != null) existente.setEstatusSuficiencia(datosNuevos.getEstatusSuficiencia());
+                if (datosNuevos.getFechaSuficiencia() != null) existente.setFechaSuficiencia(datosNuevos.getFechaSuficiencia());
+                if (datosNuevos.getObservaciones() != null) existente.setObservaciones(datosNuevos.getObservaciones());
+                if (datosNuevos.getEstatus() != null) existente.setEstatus(datosNuevos.getEstatus());
+            } else {
+                if (datosNuevos.getOficioSuficiencia() != null) existente.setOficioSuficiencia(datosNuevos.getOficioSuficiencia());
+                if (datosNuevos.getEstatus() != null) existente.setEstatus(datosNuevos.getEstatus());
+            }
 
             AfectacionPresupuestal actualizado = afectacionRepo.save(existente);
 
@@ -77,6 +103,13 @@ public class AfectacionController {
     // DELETE — Eliminar (Solo ADMIN)
     @DeleteMapping("/{id}")
     public ResponseEntity<?> eliminarAfectacion(@PathVariable Long id) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isAdmin = auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMINISTRADOR"));
+        if (!isAdmin) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Solo un Administrador puede eliminar registros.");
+        }
+
         return afectacionRepo.findById(id).map(afectacion -> {
             auditService.registrar("DELETE", "AFECTACION", id,
                     afectacion.getFolioCa(), afectacion, null,

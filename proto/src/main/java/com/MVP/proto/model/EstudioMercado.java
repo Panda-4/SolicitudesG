@@ -37,6 +37,9 @@ public class EstudioMercado {
     private String montoSabys;
     private String descripcionBien;
     private Boolean contratacionPlurianual;
+    
+    // Campo para Pertenencia (Owner)
+    private String creadorUsername;
 
     // Si NO usas Lombok (@Data), tendrías que escribir manualmente:
     // public Long getId() { return id; }

@@ -26,7 +26,7 @@ function App() {
   // === ESTADO DE AUTENTICACIÓN ===
   const [isLoggedIn, setIsLoggedIn] = useState(isAuthenticated());
 
-  const [currentView, setCurrentView] = useState('register');
+  const [currentView, setCurrentView] = useState('dashboard');
   const [records, setRecords] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');

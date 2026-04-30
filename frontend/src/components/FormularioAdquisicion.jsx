@@ -5,6 +5,7 @@ import {
   Calendar, CheckCircle2, ChevronDown, Clock, FolderOpen,
   Gavel, Link2, Megaphone, RotateCcw, Hash, DollarSign, Receipt
 } from 'lucide-react';
+import { getUser } from '../services/authService';
 
 const MODALIDADES = [
   'Licitación Pública Nacional',
@@ -39,6 +40,9 @@ const initCronograma = () =>
   }, {});
 
 const FormularioAdquisicion = ({ onSuccess, recordToEdit }) => {
+  const isAdmin = getUser()?.rol === 'ADMINISTRADOR';
+  const isPartialEdit = recordToEdit && !isAdmin;
+
   const [expedientes, setExpedientes] = useState([]);
   const [afectaciones, setAfectaciones] = useState([]);
   const [selectedExpedienteId, setSelectedExpedienteId] = useState('');
@@ -182,8 +186,9 @@ const FormularioAdquisicion = ({ onSuccess, recordToEdit }) => {
                 type="text"
                 value={formData.noProcedimiento}
                 onChange={handleChange('noProcedimiento')}
+                disabled={isPartialEdit}
                 placeholder="Ej: LP-001-2026"
-                className="w-full text-2xl font-black text-center font-mono bg-transparent outline-none text-[#9D2449] placeholder:text-[#9D2449]/30"
+                className={`w-full text-2xl font-black text-center font-mono bg-transparent outline-none text-[#9D2449] placeholder:text-[#9D2449]/30 ${isPartialEdit ? 'opacity-50 cursor-not-allowed' : ''}`}
               />
             </div>
           </div>
@@ -208,7 +213,8 @@ const FormularioAdquisicion = ({ onSuccess, recordToEdit }) => {
               <select
                 value={selectedExpedienteId}
                 onChange={(e) => { setSelectedExpedienteId(e.target.value); if (!e.target.value) setMostrarDetalles(false); }}
-                className={`${inputClass} appearance-none cursor-pointer bg-white border-[#9D2449]/20 focus:border-[#9D2449]/50`}
+                disabled={isPartialEdit}
+                className={`${inputClass} appearance-none cursor-pointer bg-white border-[#9D2449]/20 focus:border-[#9D2449]/50 ${isPartialEdit ? 'bg-slate-100 opacity-60 cursor-not-allowed' : ''}`}
               >
                 <option value="">Seleccione un Expediente...</option>
                 {expedientes.map((exp) => (
@@ -309,7 +315,8 @@ const FormularioAdquisicion = ({ onSuccess, recordToEdit }) => {
                 </label>
                 <div className="relative">
                   <select value={formData.modalidadProcedimiento} onChange={handleChange('modalidadProcedimiento')}
-                    className={`${inputClass} appearance-none cursor-pointer`}>
+                    disabled={isPartialEdit}
+                    className={`${inputClass} appearance-none cursor-pointer ${isPartialEdit ? 'bg-slate-100 opacity-60 cursor-not-allowed' : ''}`}>
                     <option value="">Seleccione Modalidad...</option>
                     {MODALIDADES.map((m, i) => (<option key={i} value={m}>{m}</option>))}
                   </select>
@@ -326,8 +333,9 @@ const FormularioAdquisicion = ({ onSuccess, recordToEdit }) => {
                   type="url"
                   value={formData.convocatoriaUrl}
                   onChange={handleChange('convocatoriaUrl')}
+                  disabled={isPartialEdit}
                   placeholder="https://ejemplo.com/convocatoria"
-                  className={inputClass}
+                  className={`${inputClass} ${isPartialEdit ? 'bg-slate-100 opacity-60 cursor-not-allowed' : ''}`}
                 />
               </div>
             </div>
@@ -341,7 +349,8 @@ const FormularioAdquisicion = ({ onSuccess, recordToEdit }) => {
                 </label>
                 <div className="relative">
                   <select value={formData.medioPublicacion} onChange={handleChange('medioPublicacion')}
-                    className={`${inputClass} appearance-none cursor-pointer`}>
+                    disabled={isPartialEdit}
+                    className={`${inputClass} appearance-none cursor-pointer ${isPartialEdit ? 'bg-slate-100 opacity-60 cursor-not-allowed' : ''}`}>
                     <option value="">Seleccione Medio...</option>
                     {MEDIOS_PUBLICACION.map((m, i) => (<option key={i} value={m}>{m}</option>))}
                   </select>

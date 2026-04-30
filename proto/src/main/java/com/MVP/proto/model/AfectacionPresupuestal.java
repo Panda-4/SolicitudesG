@@ -44,4 +44,7 @@ public class AfectacionPresupuestal {
     private Boolean consolidado; // Toggle
     private String estatus; // Pendiente, En Revisión, Aprobado, Rechazado
     private String fechaRegistro; // Fecha de creación del registro
+    
+    // Campo para Pertenencia (Owner)
+    private String creadorUsername;
 }

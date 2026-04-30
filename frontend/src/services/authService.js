@@ -33,7 +33,21 @@ export const getUser = () => {
   return user ? JSON.parse(user) : null;
 };
 
-export const isAuthenticated = () => !!getToken();
+export const isAuthenticated = () => {
+  const token = getToken();
+  if (!token) return false;
+
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    if (payload.exp && payload.exp * 1000 < Date.now()) {
+      logout();
+      return false;
+    }
+    return true;
+  } catch (e) {
+    return false;
+  }
+};
 
 // === PERMISOS POR MÓDULO ===
 // Retorna true si el usuario tiene acceso al módulo indicado
@@ -74,6 +88,29 @@ export const canRegister = () => {
   const user = getUser();
   if (!user) return false;
   return user.rol !== 'CONSULTOR';
+};
+
+// === ¿PUEDE EDITAR REGISTRO? ===
+// Retorna true si es ADMIN o si tiene el rol del módulo Y es el creador
+export const canEditRecord = (moduloReq, recordCreadorUsername) => {
+  const user = getUser();
+  if (!user) return false;
+
+  const rol = user.rol;
+
+  // ADMINISTRADOR edita todo
+  if (rol === 'ADMINISTRADOR') return true;
+
+  // CONSULTOR no edita nada
+  if (rol === 'CONSULTOR') return false;
+
+  // Roles por módulo: solo pueden editar si son los dueños
+  // moduloReq debe ser exactamente el nombre del ROL (Ej: 'AFECTACION', 'ADQUISICIONES', 'ADJUDICACION')
+  if (rol === moduloReq && recordCreadorUsername === user.username) {
+    return true;
+  }
+
+  return false;
 };
 
 // === CONFIGURAR AXIOS ===

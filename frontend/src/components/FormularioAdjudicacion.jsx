@@ -5,8 +5,12 @@ import {
   ChevronDown, FolderOpen, RotateCcw, Award, User, FileText,
   DollarSign, Calendar, Link2, MessageSquare, Receipt, Gavel, Hash
 } from 'lucide-react';
+import { getUser } from '../services/authService';
 
 const FormularioAdjudicacion = ({ onSuccess, recordToEdit }) => {
+  const isAdmin = getUser()?.rol === 'ADMINISTRADOR';
+  const isPartialEdit = recordToEdit && !isAdmin;
+
   const [expedientes, setExpedientes] = useState([]);
   const [afectaciones, setAfectaciones] = useState([]);
   const [procedimientos, setProcedimientos] = useState([]);
@@ -146,8 +150,9 @@ const FormularioAdjudicacion = ({ onSuccess, recordToEdit }) => {
                 type="text"
                 value={formData.folioInterno}
                 onChange={handleChange('folioInterno')}
+                disabled={isPartialEdit}
                 placeholder="Ej: ADJ-001-2026"
-                className="w-full text-2xl font-black text-center font-mono bg-transparent outline-none text-[#9D2449] placeholder:text-[#9D2449]/30"
+                className={`w-full text-2xl font-black text-center font-mono bg-transparent outline-none text-[#9D2449] placeholder:text-[#9D2449]/30 ${isPartialEdit ? 'opacity-50 cursor-not-allowed' : ''}`}
               />
             </div>
           </div>
@@ -168,7 +173,8 @@ const FormularioAdjudicacion = ({ onSuccess, recordToEdit }) => {
             <div className="relative">
               <select value={selectedExpedienteId}
                 onChange={(e) => { setSelectedExpedienteId(e.target.value); if (!e.target.value) setMostrarDetalles(false); }}
-                className={`${inputClass} appearance-none cursor-pointer bg-white border-[#9D2449]/20 focus:border-[#9D2449]/50`}>
+                disabled={isPartialEdit}
+                className={`${inputClass} appearance-none cursor-pointer bg-white border-[#9D2449]/20 focus:border-[#9D2449]/50 ${isPartialEdit ? 'bg-slate-100 opacity-60 cursor-not-allowed' : ''}`}>
                 <option value="">Seleccione un Expediente...</option>
                 {expedientes.map((exp) => (
                   <option key={exp.id} value={exp.id}>
@@ -252,15 +258,15 @@ const FormularioAdjudicacion = ({ onSuccess, recordToEdit }) => {
             <div className="space-y-10">
               <div className="space-y-2">
                 <label className={labelClass}><User size={16} className="text-[#B38E5D]" /> Nombre o Razón Social</label>
-                <input type="text" value={formData.nombreRazonSocial} onChange={handleChange('nombreRazonSocial')} placeholder="Razón Social del proveedor" className={inputClass} />
+                <input type="text" value={formData.nombreRazonSocial} onChange={handleChange('nombreRazonSocial')} disabled={isPartialEdit} placeholder="Razón Social del proveedor" className={`${inputClass} ${isPartialEdit ? 'bg-slate-100 opacity-60 cursor-not-allowed' : ''}`} />
               </div>
               <div className="space-y-2">
                 <label className={labelClass}><Hash size={16} className="text-[#B38E5D]" /> RFC</label>
-                <input type="text" value={formData.rfc} onChange={handleChange('rfc')} placeholder="Ej: XAXX010101000" maxLength={13} className={`${inputClass} uppercase font-mono`} />
+                <input type="text" value={formData.rfc} onChange={handleChange('rfc')} disabled={isPartialEdit} placeholder="Ej: XAXX010101000" maxLength={13} className={`${inputClass} uppercase font-mono ${isPartialEdit ? 'bg-slate-100 opacity-60 cursor-not-allowed' : ''}`} />
               </div>
               <div className="space-y-2">
                 <label className={labelClass}><DollarSign size={16} className="text-[#B38E5D]" /> Monto Total Adjudicación con IVA</label>
-                <input type="number" value={formData.montoTotalConIva} onChange={handleChange('montoTotalConIva')} placeholder="$0.00" step="0.01" className={inputClass} />
+                <input type="number" value={formData.montoTotalConIva} onChange={handleChange('montoTotalConIva')} disabled={isPartialEdit} placeholder="$0.00" step="0.01" className={`${inputClass} ${isPartialEdit ? 'bg-slate-100 opacity-60 cursor-not-allowed' : ''}`} />
               </div>
               <div className="space-y-2">
                 <label className={labelClass}><FileText size={16} className="text-[#B38E5D]" /> Número de Contrato</label>
@@ -268,11 +274,11 @@ const FormularioAdjudicacion = ({ onSuccess, recordToEdit }) => {
               </div>
               <div className="space-y-2">
                 <label className={labelClass}><Calendar size={16} className="text-[#B38E5D]" /> Inicio de Vigencia</label>
-                <input type="date" value={formData.inicioVigencia} onChange={handleChange('inicioVigencia')} className={inputClass} />
+                <input type="date" value={formData.inicioVigencia} onChange={handleChange('inicioVigencia')} disabled={isPartialEdit} className={`${inputClass} ${isPartialEdit ? 'bg-slate-100 opacity-60 cursor-not-allowed' : ''}`} />
               </div>
               <div className="space-y-2">
                 <label className={labelClass}><Calendar size={16} className="text-[#B38E5D]" /> Término de Vigencia</label>
-                <input type="date" value={formData.terminoVigencia} onChange={handleChange('terminoVigencia')} className={inputClass} />
+                <input type="date" value={formData.terminoVigencia} onChange={handleChange('terminoVigencia')} disabled={isPartialEdit} className={`${inputClass} ${isPartialEdit ? 'bg-slate-100 opacity-60 cursor-not-allowed' : ''}`} />
               </div>
             </div>
 
@@ -284,11 +290,11 @@ const FormularioAdjudicacion = ({ onSuccess, recordToEdit }) => {
               </div>
               <div className="space-y-2">
                 <label className={labelClass}><DollarSign size={16} className="text-[#B38E5D]" /> Remanente (Suficiencia Presupuestal)</label>
-                <input type="number" value={formData.remanenteSuficiencia} onChange={handleChange('remanenteSuficiencia')} placeholder="$0.00" step="0.01" className={inputClass} />
+                <input type="number" value={formData.remanenteSuficiencia} onChange={handleChange('remanenteSuficiencia')} disabled={isPartialEdit} placeholder="$0.00" step="0.01" className={`${inputClass} ${isPartialEdit ? 'bg-slate-100 opacity-60 cursor-not-allowed' : ''}`} />
               </div>
               <div className="space-y-2">
                 <label className={labelClass}><User size={16} className="text-[#B38E5D]" /> Nombre del Responsable</label>
-                <input type="text" value={formData.nombreResponsable} onChange={handleChange('nombreResponsable')} placeholder="Nombre completo del responsable" className={inputClass} />
+                <input type="text" value={formData.nombreResponsable} onChange={handleChange('nombreResponsable')} disabled={isPartialEdit} placeholder="Nombre completo del responsable" className={`${inputClass} ${isPartialEdit ? 'bg-slate-100 opacity-60 cursor-not-allowed' : ''}`} />
               </div>
               <div className="space-y-2">
                 <label className={labelClass}><Award size={16} className="text-[#B38E5D]" /> Estatus</label>
@@ -309,8 +315,9 @@ const FormularioAdjudicacion = ({ onSuccess, recordToEdit }) => {
               <div className="space-y-2">
                 <label className={labelClass}><RotateCcw size={16} className="text-[#B38E5D]" /> Reprogramación</label>
                 <div className="flex items-center gap-4 py-2">
-                  <button type="button" onClick={() => setReprogramacion(!reprogramacion)}
-                    className={`relative w-14 h-7 rounded-full transition-all duration-300 ${reprogramacion ? 'bg-[#9D2449]' : 'bg-slate-200'}`}>
+                  <button type="button" onClick={() => !isPartialEdit && setReprogramacion(!reprogramacion)}
+                    disabled={isPartialEdit}
+                    className={`relative w-14 h-7 rounded-full transition-all duration-300 ${reprogramacion ? 'bg-[#9D2449]' : 'bg-slate-200'} ${isPartialEdit ? 'opacity-50 cursor-not-allowed' : ''}`}>
                     <div className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow-md transition-all duration-300 ${reprogramacion ? 'left-7' : 'left-0.5'}`} />
                   </button>
                   <span className="font-bold text-sm text-slate-600">{reprogramacion ? 'Sí — Reprogramado' : 'No'}</span>
@@ -322,8 +329,9 @@ const FormularioAdjudicacion = ({ onSuccess, recordToEdit }) => {
             <div className="md:col-span-2 space-y-2">
               <label className={labelClass}><MessageSquare size={16} className="text-[#B38E5D]" /> Comentarios / Observaciones</label>
               <textarea value={formData.comentarios} onChange={handleChange('comentarios')} rows={4}
+                disabled={isPartialEdit}
                 placeholder="Observaciones detalladas sobre la adjudicación..."
-                className={`${inputClass} resize-none`} />
+                className={`${inputClass} resize-none ${isPartialEdit ? 'bg-slate-100 opacity-60 cursor-not-allowed' : ''}`} />
             </div>
           </form>
 

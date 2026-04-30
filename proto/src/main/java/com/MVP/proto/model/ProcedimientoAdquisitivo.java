@@ -50,4 +50,7 @@ public class ProcedimientoAdquisitivo {
 
     private String estatus; // En Proceso, Adjudicado, Desierto
     private String fechaRegistro;
+    
+    // Campo para Pertenencia (Owner)
+    private String creadorUsername;
 }

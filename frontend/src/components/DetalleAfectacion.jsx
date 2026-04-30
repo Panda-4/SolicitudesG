@@ -5,12 +5,13 @@ import {
   CheckCircle2, Layers, Tag, Receipt, Shield, Hash, KeyRound,
   Package, ChevronRight, Printer, Download, FolderOpen, Edit3, Trash2
 } from 'lucide-react';
-import { getUser } from '../services/authService';
+import { getUser, canEditRecord } from '../services/authService';
 import ConfirmModal from './ConfirmModal';
 
 const DetalleAfectacion = ({ afectacion, onBack, onEdit, onDelete }) => {
   const [isConfirmOpen, setIsConfirmOpen] = React.useState(false);
   const isAdmin = getUser()?.rol === 'ADMINISTRADOR';
+  const canEdit = canEditRecord('AFECTACION', afectacion?.creadorUsername);
 
   if (!afectacion) return null;
 
@@ -158,21 +159,21 @@ const DetalleAfectacion = ({ afectacion, onBack, onEdit, onDelete }) => {
         <div className="p-8 bg-slate-50 border-t border-slate-100 flex flex-wrap justify-between items-center gap-4 print:hidden">
           {/* Lado izquierdo: Acciones de Admin */}
           <div className="flex gap-4">
+            {canEdit && (
+              <button
+                onClick={() => onEdit && onEdit(afectacion)}
+                className="px-6 py-3 bg-white border border-[#B38E5D] text-[#B38E5D] font-bold rounded-2xl hover:bg-[#B38E5D] hover:text-white transition-all shadow-sm flex items-center gap-2"
+              >
+                <Edit3 size={18} /> Editar Registro
+              </button>
+            )}
             {isAdmin && (
-              <>
-                <button
-                  onClick={() => onEdit && onEdit(afectacion)}
-                  className="px-6 py-3 bg-white border border-[#B38E5D] text-[#B38E5D] font-bold rounded-2xl hover:bg-[#B38E5D] hover:text-white transition-all shadow-sm flex items-center gap-2"
-                >
-                  <Edit3 size={18} /> Editar Registro
-                </button>
-                <button
-                  onClick={() => setIsConfirmOpen(true)}
-                  className="px-6 py-3 bg-white border border-[#9D2449] text-[#9D2449] font-bold rounded-2xl hover:bg-[#9D2449] hover:text-white transition-all shadow-sm flex items-center gap-2"
-                >
-                  <Trash2 size={18} /> Eliminar
-                </button>
-              </>
+              <button
+                onClick={() => setIsConfirmOpen(true)}
+                className="px-6 py-3 bg-white border border-[#9D2449] text-[#9D2449] font-bold rounded-2xl hover:bg-[#9D2449] hover:text-white transition-all shadow-sm flex items-center gap-2"
+              >
+                <Trash2 size={18} /> Eliminar
+              </button>
             )}
           </div>
 

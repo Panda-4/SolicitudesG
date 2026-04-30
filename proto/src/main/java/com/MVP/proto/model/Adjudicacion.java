@@ -44,4 +44,7 @@ public class Adjudicacion {
     private String estatus; // Adjudicado, Formalizado, En Revisión, Cancelado
     private Boolean reprogramacion; // Toggle
     private String fechaRegistro;
+    
+    // Campo para Pertenencia (Owner)
+    private String creadorUsername;
 }

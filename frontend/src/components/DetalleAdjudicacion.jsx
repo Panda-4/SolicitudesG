@@ -4,12 +4,13 @@ import {
   ArrowLeft, Award, User, FileText, DollarSign, Calendar,
   Link2, ExternalLink, FolderOpen, Hash, CheckCircle2, MessageSquare, RotateCcw, Printer, Edit3, Trash2
 } from 'lucide-react';
-import { getUser } from '../services/authService';
+import { getUser, canEditRecord } from '../services/authService';
 import ConfirmModal from './ConfirmModal';
 
 const DetalleAdjudicacion = ({ adjudicacion, onBack, onEdit, onDelete }) => {
   const [isConfirmOpen, setIsConfirmOpen] = React.useState(false);
   const isAdmin = getUser()?.rol === 'ADMINISTRADOR';
+  const canEdit = canEditRecord('ADJUDICACION', adjudicacion?.creadorUsername);
 
   if (!adjudicacion) return null;
 
@@ -40,21 +41,21 @@ const DetalleAdjudicacion = ({ adjudicacion, onBack, onEdit, onDelete }) => {
               <ArrowLeft size={16} /> Volver a Consulta
             </button>
             <div className="flex gap-3">
+              {canEdit && (
+                <button
+                  onClick={() => onEdit && onEdit(adjudicacion)}
+                  className="flex items-center gap-2 px-4 py-2 bg-white border border-[#B38E5D] text-[#B38E5D] rounded-xl hover:bg-[#B38E5D] hover:text-white transition-all shadow-sm font-bold text-sm"
+                >
+                  <Edit3 size={18} /> Editar
+                </button>
+              )}
               {isAdmin && (
-                <>
-                  <button
-                    onClick={() => onEdit && onEdit(adjudicacion)}
-                    className="flex items-center gap-2 px-4 py-2 bg-white border border-[#B38E5D] text-[#B38E5D] rounded-xl hover:bg-[#B38E5D] hover:text-white transition-all shadow-sm font-bold text-sm"
-                  >
-                    <Edit3 size={18} /> Editar
-                  </button>
-                  <button
-                    onClick={() => setIsConfirmOpen(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-white border border-[#9D2449] text-[#9D2449] rounded-xl hover:bg-[#9D2449] hover:text-white transition-all shadow-sm font-bold text-sm"
-                  >
-                    <Trash2 size={18} /> Eliminar
-                  </button>
-                </>
+                <button
+                  onClick={() => setIsConfirmOpen(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-white border border-[#9D2449] text-[#9D2449] rounded-xl hover:bg-[#9D2449] hover:text-white transition-all shadow-sm font-bold text-sm"
+                >
+                  <Trash2 size={18} /> Eliminar
+                </button>
               )}
               <button onClick={() => window.print()} className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-500 rounded-xl hover:text-[#9D2449] hover:border-[#9D2449] transition-all shadow-sm font-bold text-sm">
                 <Printer size={18} />

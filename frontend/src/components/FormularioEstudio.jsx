@@ -10,6 +10,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import 'dayjs/locale/es';
+import { getUser } from '../services/authService';
 
 // Lista de Dependencias del Gobierno del Estado de México (Fallback)
 const DEFAULT_DEPENDENCIAS = [
@@ -382,6 +383,10 @@ const DEFAULT_PARTIDAS = [
 
 // El componente recibe 'onSuccess' y 'recordToEdit' como prop desde App.jsx
 const FormularioEstudio = ({ onSuccess, recordToEdit }) => {
+  const currentUser = getUser();
+  const isAdmin = currentUser?.rol === 'ADMINISTRADOR';
+  const isPartialEdit = !!recordToEdit && !isAdmin;
+
   // Inicializamos estados con listas locales por si Java falla
   const [partidas, setPartidas] = useState(DEFAULT_PARTIDAS.map((p, i) => ({ id: i + 1, ...p })));
   const [fecha, setFecha] = useState(dayjs());
@@ -485,7 +490,7 @@ const FormularioEstudio = ({ onSuccess, recordToEdit }) => {
   };
 
   // Clases de Tailwind
-  const inputClass = "w-full px-6 py-4 bg-slate-50 border-2 border-transparent rounded-[24px] outline-none transition-all font-bold text-slate-700 focus:bg-white focus:border-[#9D2449]/30 shadow-sm";
+  const inputClass = "w-full px-6 py-4 bg-slate-50 border-2 border-transparent rounded-[24px] outline-none transition-all font-bold text-slate-700 focus:bg-white focus:border-[#9D2449]/30 shadow-sm disabled:opacity-60 disabled:bg-slate-200 disabled:cursor-not-allowed";
   const labelClass = "text-xs font-black uppercase tracking-widest flex items-center gap-2 text-slate-400 mb-2 ml-1";
 
   return (
@@ -538,6 +543,7 @@ const FormularioEstudio = ({ onSuccess, recordToEdit }) => {
                   <DatePicker 
                     value={fecha} 
                     onChange={(n) => setFecha(n)} 
+                    disabled={isPartialEdit}
                     slotProps={{ textField: { fullWidth: true, className: inputClass } }} 
                   />
                 </div>
@@ -551,6 +557,7 @@ const FormularioEstudio = ({ onSuccess, recordToEdit }) => {
                     <select
                       value={formData.origenRecurso}
                       onChange={handleChange('origenRecurso')}
+                      disabled={isPartialEdit}
                       className={`${inputClass} appearance-none cursor-pointer`}
                     >
                       <option value="">Seleccione Origen...</option>
@@ -571,6 +578,7 @@ const FormularioEstudio = ({ onSuccess, recordToEdit }) => {
                     <select
                       value={formData.dependencia}
                       onChange={handleChange('dependencia')}
+                      disabled={isPartialEdit}
                       className={`${inputClass} appearance-none cursor-pointer`}
                     >
                       <option value="">Seleccione Dependencia...</option>
@@ -593,6 +601,7 @@ const FormularioEstudio = ({ onSuccess, recordToEdit }) => {
                     type="text"
                     value={formData.centroCosto}
                     onChange={handleChange('centroCosto')}
+                    disabled={isPartialEdit}
                     placeholder="Clave de C.C."
                     className={inputClass}
                   />
@@ -607,6 +616,7 @@ const FormularioEstudio = ({ onSuccess, recordToEdit }) => {
                     <select
                       value={formData.giro}
                       onChange={handleChange('giro')}
+                      disabled={isPartialEdit}
                       className={`${inputClass} appearance-none cursor-pointer`}
                     >
                       <option value="">Seleccione Giro...</option>
@@ -629,8 +639,9 @@ const FormularioEstudio = ({ onSuccess, recordToEdit }) => {
                   </div>
                   <button
                     type="button"
+                    disabled={isPartialEdit}
                     onClick={() => setPlurianual(!plurianual)}
-                    className={`w-16 h-8 rounded-full p-1 transition-all duration-300 relative ${plurianual ? 'bg-[#9D2449] shadow-lg shadow-[#9D2449]/30' : 'bg-slate-300'}`}
+                    className={`w-16 h-8 rounded-full p-1 transition-all duration-300 relative ${isPartialEdit ? 'opacity-50 cursor-not-allowed' : ''} ${plurianual ? 'bg-[#9D2449] shadow-lg shadow-[#9D2449]/30' : 'bg-slate-300'}`}
                   >
                     <div className={`w-6 h-6 bg-white rounded-full shadow-md transition-all duration-300 transform ${plurianual ? 'translate-x-8' : 'translate-x-0'}`} />
                   </button>
@@ -670,6 +681,7 @@ const FormularioEstudio = ({ onSuccess, recordToEdit }) => {
                     <select
                       value={formData.capitulo}
                       onChange={handleChange('capitulo')}
+                      disabled={isPartialEdit}
                       className={`${inputClass} appearance-none cursor-pointer`}
                     >
                       <option value="">Seleccione Capítulo...</option>
@@ -705,6 +717,7 @@ const FormularioEstudio = ({ onSuccess, recordToEdit }) => {
                     <select
                       value={formData.partida}
                       onChange={handleChange('partida')}
+                      disabled={isPartialEdit}
                       className={`${inputClass} appearance-none cursor-pointer`}
                     >
                       <option value="">Seleccione Partida...</option>
@@ -761,6 +774,7 @@ const FormularioEstudio = ({ onSuccess, recordToEdit }) => {
                     rows={4}
                     value={formData.descripcionBien}
                     onChange={handleChange('descripcionBien')}
+                    disabled={isPartialEdit}
                     placeholder="Describa técnica y detalladamente..."
                     className={`${inputClass} resize-none`}
                   />

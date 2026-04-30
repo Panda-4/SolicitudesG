@@ -11,6 +11,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import 'dayjs/locale/es';
+import { getUser } from '../services/authService';
 
 // Opciones por defecto para dropdowns
 const TIPOS_GASTO = [
@@ -35,6 +36,9 @@ const UNIDADES_MEDIDA = [
 ];
 
 const FormularioAfectacion = ({ onSuccess, recordToEdit }) => {
+  const isAdmin = getUser()?.rol === 'ADMINISTRADOR';
+  const isPartialEdit = recordToEdit && !isAdmin;
+
   const [fecha, setFecha] = useState(dayjs());
   const [contratoAbierto, setContratoAbierto] = useState(false);
   const [consolidado, setConsolidado] = useState(false);
@@ -184,8 +188,9 @@ const FormularioAfectacion = ({ onSuccess, recordToEdit }) => {
                   type="text"
                   value={formData.folioCa}
                   onChange={handleChange('folioCa')}
+                  disabled={isPartialEdit}
                   placeholder="Ej: CA-2026-0001"
-                  className="w-full text-2xl font-black text-center font-mono bg-transparent outline-none text-[#9D2449] placeholder:text-[#9D2449]/30"
+                  className={`w-full text-2xl font-black text-center font-mono bg-transparent outline-none text-[#9D2449] placeholder:text-[#9D2449]/30 ${isPartialEdit ? 'opacity-50 cursor-not-allowed' : ''}`}
                 />
               </div>
             </div>
@@ -213,7 +218,8 @@ const FormularioAfectacion = ({ onSuccess, recordToEdit }) => {
                     setSelectedExpedienteId(e.target.value);
                     if (!e.target.value) setMostrarDetalles(false);
                   }}
-                  className={`${inputClass} appearance-none cursor-pointer bg-white border-[#9D2449]/20 focus:border-[#9D2449]/50`}
+                  disabled={isPartialEdit}
+                  className={`${inputClass} appearance-none cursor-pointer bg-white border-[#9D2449]/20 focus:border-[#9D2449]/50 ${isPartialEdit ? 'bg-slate-100 opacity-60 cursor-not-allowed' : ''}`}
                 >
                   <option value="">Seleccione un Expediente...</option>
                   {expedientes.map((exp) => (
@@ -270,7 +276,8 @@ const FormularioAfectacion = ({ onSuccess, recordToEdit }) => {
                   <DatePicker 
                     value={fecha} 
                     onChange={(n) => setFecha(n)} 
-                    slotProps={{ textField: { fullWidth: true, className: inputClass } }} 
+                    disabled={isPartialEdit}
+                    slotProps={{ textField: { fullWidth: true, className: inputClass + (isPartialEdit ? ' bg-slate-100 opacity-60 cursor-not-allowed' : '') } }} 
                   />
                 </div>
 
@@ -283,8 +290,9 @@ const FormularioAfectacion = ({ onSuccess, recordToEdit }) => {
                     type="text"
                     value={formData.testigoSocial}
                     onChange={handleChange('testigoSocial')}
+                    disabled={isPartialEdit}
                     placeholder="Nombre del testigo social asignado"
-                    className={inputClass}
+                    className={`${inputClass} ${isPartialEdit ? 'bg-slate-100 opacity-60 cursor-not-allowed' : ''}`}
                   />
                 </div>
 
@@ -297,7 +305,8 @@ const FormularioAfectacion = ({ onSuccess, recordToEdit }) => {
                     <select
                       value={formData.tipoGasto}
                       onChange={handleChange('tipoGasto')}
-                      className={`${inputClass} appearance-none cursor-pointer`}
+                      disabled={isPartialEdit}
+                      className={`${inputClass} appearance-none cursor-pointer ${isPartialEdit ? 'bg-slate-100 opacity-60 cursor-not-allowed' : ''}`}
                     >
                       <option value="">Seleccione Tipo de Gasto...</option>
                       {TIPOS_GASTO.map((tipo, i) => (
@@ -317,7 +326,8 @@ const FormularioAfectacion = ({ onSuccess, recordToEdit }) => {
                     <select
                       value={formData.fuenteFinanciamiento}
                       onChange={handleChange('fuenteFinanciamiento')}
-                      className={`${inputClass} appearance-none cursor-pointer`}
+                      disabled={isPartialEdit}
+                      className={`${inputClass} appearance-none cursor-pointer ${isPartialEdit ? 'bg-slate-100 opacity-60 cursor-not-allowed' : ''}`}
                     >
                       <option value="">Seleccione Fuente...</option>
                       {FUENTES_FINANCIAMIENTO.map((fuente, i) => (
@@ -337,7 +347,8 @@ const FormularioAfectacion = ({ onSuccess, recordToEdit }) => {
                     <select
                       value={formData.unidadMedida}
                       onChange={handleChange('unidadMedida')}
-                      className={`${inputClass} appearance-none cursor-pointer`}
+                      disabled={isPartialEdit}
+                      className={`${inputClass} appearance-none cursor-pointer ${isPartialEdit ? 'bg-slate-100 opacity-60 cursor-not-allowed' : ''}`}
                     >
                       <option value="">Seleccione Unidad...</option>
                       {UNIDADES_MEDIDA.map((u, i) => (
@@ -356,8 +367,9 @@ const FormularioAfectacion = ({ onSuccess, recordToEdit }) => {
                   </div>
                   <button
                     type="button"
-                    onClick={() => setContratoAbierto(!contratoAbierto)}
-                    className={`w-16 h-8 rounded-full p-1 transition-all duration-300 relative ${contratoAbierto ? 'bg-[#9D2449] shadow-lg shadow-[#9D2449]/30' : 'bg-slate-300'}`}
+                    onClick={() => !isPartialEdit && setContratoAbierto(!contratoAbierto)}
+                    disabled={isPartialEdit}
+                    className={`w-16 h-8 rounded-full p-1 transition-all duration-300 relative ${contratoAbierto ? 'bg-[#9D2449] shadow-lg shadow-[#9D2449]/30' : 'bg-slate-300'} ${isPartialEdit ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
                     <div className={`w-6 h-6 bg-white rounded-full shadow-md transition-all duration-300 transform ${contratoAbierto ? 'translate-x-8' : 'translate-x-0'}`} />
                   </button>
@@ -399,8 +411,9 @@ const FormularioAfectacion = ({ onSuccess, recordToEdit }) => {
                       type="number"
                       value={formData.importeSuficiencia}
                       onChange={handleChange('importeSuficiencia')}
+                      disabled={isPartialEdit}
                       placeholder="0.00"
-                      className={`w-full pl-10 pr-6 py-4 border-2 rounded-[24px] transition-all outline-none font-black text-xl text-[#9D2449] bg-white border-slate-100 focus:border-[#9D2449]/30`}
+                      className={`w-full pl-10 pr-6 py-4 border-2 rounded-[24px] transition-all outline-none font-black text-xl text-[#9D2449] bg-white border-slate-100 focus:border-[#9D2449]/30 ${isPartialEdit ? 'bg-slate-100 opacity-60 cursor-not-allowed' : ''}`}
                     />
                   </div>
                 </div>
@@ -428,8 +441,9 @@ const FormularioAfectacion = ({ onSuccess, recordToEdit }) => {
                     type="text"
                     value={formData.claveVerificacion}
                     onChange={handleChange('claveVerificacion')}
+                    disabled={isPartialEdit}
                     placeholder="XXXX-XXXX-XXXX"
-                    className={`${inputClass} font-mono text-lg tracking-[0.15em] text-[#9D2449] bg-[#9D2449]/5 border-[#9D2449]/10 focus:border-[#9D2449]/30`}
+                    className={`${inputClass} font-mono text-lg tracking-[0.15em] text-[#9D2449] bg-[#9D2449]/5 border-[#9D2449]/10 focus:border-[#9D2449]/30 ${isPartialEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
                   />
                 </div>
 
@@ -444,8 +458,9 @@ const FormularioAfectacion = ({ onSuccess, recordToEdit }) => {
                   </div>
                   <button
                     type="button"
-                    onClick={() => setConsolidado(!consolidado)}
-                    className={`w-16 h-8 rounded-full p-1 transition-all duration-300 relative ${consolidado ? 'bg-[#B38E5D] shadow-lg shadow-[#B38E5D]/30' : 'bg-slate-300'}`}
+                    onClick={() => !isPartialEdit && setConsolidado(!consolidado)}
+                    disabled={isPartialEdit}
+                    className={`w-16 h-8 rounded-full p-1 transition-all duration-300 relative ${consolidado ? 'bg-[#B38E5D] shadow-lg shadow-[#B38E5D]/30' : 'bg-slate-300'} ${isPartialEdit ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
                     <div className={`w-6 h-6 bg-white rounded-full shadow-md transition-all duration-300 transform ${consolidado ? 'translate-x-8' : 'translate-x-0'}`} />
                   </button>
@@ -462,8 +477,9 @@ const FormularioAfectacion = ({ onSuccess, recordToEdit }) => {
                   rows={5}
                   value={formData.descripcionClave}
                   onChange={handleChange('descripcionClave')}
+                  disabled={isPartialEdit}
                   placeholder="Describa detalladamente la clave presupuestal, su fundamento y alcance técnico..."
-                  className={`${inputClass} resize-none`}
+                  className={`${inputClass} resize-none ${isPartialEdit ? 'bg-slate-100 opacity-60 cursor-not-allowed' : ''}`}
                 />
               </div>
 

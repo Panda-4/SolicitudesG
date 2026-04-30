@@ -8,6 +8,9 @@ import com.MVP.proto.service.AuditService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.http.HttpStatus;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -30,6 +33,11 @@ public class EstudioController {
     @PostMapping
     public ResponseEntity<EstudioMercado> guardarEstudio(@RequestBody EstudioMercado estudio) {
         
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null) {
+            estudio.setCreadorUsername(auth.getName());
+        }
+
         // 1. Crear el Expediente maestro automáticamente
         Expediente expediente = new Expediente();
         expediente.setEstatusGeneral("Activo");
@@ -70,10 +78,23 @@ public class EstudioController {
         return estudioRepo.findAllByOrderByFechaIngresoDesc();
     }
 
-    // Endpoint para EDITAR (PUT) — Solo ADMIN
+    // Endpoint para EDITAR (PUT)
     @PutMapping("/{id}")
     public ResponseEntity<?> editarEstudio(@PathVariable Long id, @RequestBody EstudioMercado datosNuevos) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isAdmin = auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMINISTRADOR"));
+        String currentUsername = auth != null ? auth.getName() : "";
+
         return estudioRepo.findById(id).map(existente -> {
+            
+            if (!isAdmin) {
+                // Verificar pertenencia
+                if (!currentUsername.equals(existente.getCreadorUsername())) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body("No tienes permiso para editar este registro.");
+                }
+            }
+
             // Snapshot antes
             EstudioMercado antes = new EstudioMercado();
             antes.setId(existente.getId());
@@ -90,18 +111,25 @@ public class EstudioController {
             antes.setDescripcionBien(existente.getDescripcionBien());
             antes.setContratacionPlurianual(existente.getContratacionPlurianual());
 
-            // Aplicar cambios
-            if (datosNuevos.getDependencia() != null) existente.setDependencia(datosNuevos.getDependencia());
-            if (datosNuevos.getCentroCosto() != null) existente.setCentroCosto(datosNuevos.getCentroCosto());
-            if (datosNuevos.getOrigenRecurso() != null) existente.setOrigenRecurso(datosNuevos.getOrigenRecurso());
-            if (datosNuevos.getCapitulo() != null) existente.setCapitulo(datosNuevos.getCapitulo());
-            if (datosNuevos.getPartida() != null) existente.setPartida(datosNuevos.getPartida());
-            if (datosNuevos.getGiro() != null) existente.setGiro(datosNuevos.getGiro());
-            if (datosNuevos.getValorEstudio() != null) existente.setValorEstudio(datosNuevos.getValorEstudio());
-            if (datosNuevos.getEstatus() != null) existente.setEstatus(datosNuevos.getEstatus());
-            if (datosNuevos.getMontoSabys() != null) existente.setMontoSabys(datosNuevos.getMontoSabys());
-            if (datosNuevos.getDescripcionBien() != null) existente.setDescripcionBien(datosNuevos.getDescripcionBien());
-            if (datosNuevos.getContratacionPlurianual() != null) existente.setContratacionPlurianual(datosNuevos.getContratacionPlurianual());
+            // Aplicar cambios según el rol
+            if (isAdmin) {
+                if (datosNuevos.getDependencia() != null) existente.setDependencia(datosNuevos.getDependencia());
+                if (datosNuevos.getCentroCosto() != null) existente.setCentroCosto(datosNuevos.getCentroCosto());
+                if (datosNuevos.getOrigenRecurso() != null) existente.setOrigenRecurso(datosNuevos.getOrigenRecurso());
+                if (datosNuevos.getCapitulo() != null) existente.setCapitulo(datosNuevos.getCapitulo());
+                if (datosNuevos.getPartida() != null) existente.setPartida(datosNuevos.getPartida());
+                if (datosNuevos.getGiro() != null) existente.setGiro(datosNuevos.getGiro());
+                if (datosNuevos.getValorEstudio() != null) existente.setValorEstudio(datosNuevos.getValorEstudio());
+                if (datosNuevos.getEstatus() != null) existente.setEstatus(datosNuevos.getEstatus());
+                if (datosNuevos.getMontoSabys() != null) existente.setMontoSabys(datosNuevos.getMontoSabys());
+                if (datosNuevos.getDescripcionBien() != null) existente.setDescripcionBien(datosNuevos.getDescripcionBien());
+                if (datosNuevos.getContratacionPlurianual() != null) existente.setContratacionPlurianual(datosNuevos.getContratacionPlurianual());
+            } else {
+                // ESTUDIO_MERCADO solo actualiza campos permitidos
+                if (datosNuevos.getValorEstudio() != null) existente.setValorEstudio(datosNuevos.getValorEstudio());
+                if (datosNuevos.getEstatus() != null) existente.setEstatus(datosNuevos.getEstatus());
+                if (datosNuevos.getMontoSabys() != null) existente.setMontoSabys(datosNuevos.getMontoSabys());
+            }
 
             EstudioMercado actualizado = estudioRepo.save(existente);
 
@@ -116,6 +144,13 @@ public class EstudioController {
     // Endpoint para ELIMINAR (DELETE) — Solo ADMIN
     @DeleteMapping("/{id}")
     public ResponseEntity<?> eliminarEstudio(@PathVariable Long id) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isAdmin = auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMINISTRADOR"));
+        if (!isAdmin) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Solo un Administrador puede eliminar registros.");
+        }
+
         return estudioRepo.findById(id).map(estudio -> {
             auditService.registrar("DELETE", "ESTUDIO", id,
                     estudio.getFolio(), estudio, null,
