@@ -19,7 +19,7 @@ const Sidebar = ({ view, setView, currentUser, handleLogout, hasPermission }) =>
   const isActive = (targetView) => view === targetView || (Array.isArray(targetView) && targetView.includes(view));
 
   return (
-    <aside className={`w-72 border-r flex flex-col sticky top-0 h-screen z-50 transition-colors duration-500 bg-white border-slate-100 shadow-xl shadow-slate-200/20`}>
+    <aside className={`w-72 border-r flex flex-col sticky top-0 h-screen z-50 transition-colors duration-500 bg-white border-slate-100 shadow-xl shadow-slate-200/20 print:hidden`}>
       
       {/* Logo y Branding */}
       <div className="p-8 flex items-center gap-3">

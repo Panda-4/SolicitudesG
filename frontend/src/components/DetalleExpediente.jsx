@@ -23,7 +23,7 @@ const DetalleExpediente = ({ estudio, onBack }) => {
       className="space-y-8"
     >
       {/* Header de la Vista */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between print:hidden">
         <button
           onClick={onBack}
           className="flex items-center gap-2 text-slate-500 hover:text-[#9D2449] font-bold transition-colors group"
@@ -33,17 +33,17 @@ const DetalleExpediente = ({ estudio, onBack }) => {
         </button>
         
         <div className="flex gap-3">
-          <button className="p-3 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-[#9D2449] hover:border-[#9D2449] transition-all shadow-sm">
+          <button onClick={() => window.print()} className="p-3 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-[#9D2449] hover:border-[#9D2449] transition-all shadow-sm">
             <Printer size={20} />
           </button>
-          <button className="p-3 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-[#9D2449] hover:border-[#9D2449] transition-all shadow-sm">
+          <button onClick={() => window.print()} className="p-3 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-[#9D2449] hover:border-[#9D2449] transition-all shadow-sm">
             <Download size={20} />
           </button>
         </div>
       </div>
 
       {/* Tarjeta Principal de Información */}
-      <div className="bg-white rounded-[40px] shadow-2xl border border-slate-100 overflow-hidden">
+      <div className="bg-white rounded-[40px] shadow-2xl border border-slate-100 overflow-hidden print:shadow-none print:border-0 print:rounded-none">
         
         {/* Encabezado con Folio y Estatus */}
         <div className="p-10 border-b border-slate-50 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-slate-50/30">
@@ -126,14 +126,14 @@ const DetalleExpediente = ({ estudio, onBack }) => {
         </div>
 
         {/* Footer de Acciones */}
-        <div className="p-8 bg-slate-50 border-t border-slate-100 flex justify-end gap-4">
+        <div className="p-8 bg-slate-50 border-t border-slate-100 flex justify-end gap-4 print:hidden">
           <button 
             onClick={onBack}
             className="px-8 py-3 font-bold text-slate-500 hover:text-slate-800 transition-colors"
           >
             Cancelar
           </button>
-          <button className="px-8 py-3 bg-[#9D2449] text-white font-bold rounded-2xl shadow-lg shadow-[#9D2449]/20 hover:bg-[#7a1c39] transition-all flex items-center gap-2">
+          <button onClick={() => window.print()} className="px-8 py-3 bg-[#9D2449] text-white font-bold rounded-2xl shadow-lg shadow-[#9D2449]/20 hover:bg-[#7a1c39] transition-all flex items-center gap-2">
             Imprimir / Exportar PDF
           </button>
         </div>

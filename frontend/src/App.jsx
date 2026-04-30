@@ -241,10 +241,10 @@ function App() {
       />
 
       {/* Contenido Principal */}
-      <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
+      <main className="flex-1 flex flex-col h-screen overflow-hidden relative print:h-auto print:overflow-visible">
         
         {/* Header Superior Simple */}
-        <header className="h-16 bg-white border-b border-slate-100 flex items-center justify-between px-8 shadow-sm z-10">
+        <header className="h-16 bg-white border-b border-slate-100 flex items-center justify-between px-8 shadow-sm z-10 print:hidden">
           <h2 className="text-lg font-bold text-slate-500 uppercase tracking-widest">
             {currentView === 'register' ? 'Nuevo Registro' : 
              currentView === 'query' ? 'Consulta de Expedientes' : 
@@ -267,7 +267,7 @@ function App() {
         </header>
 
         {/* Área de Vistas Dinámicas */}
-        <div className="flex-1 overflow-y-auto p-8 bg-[#F8FAFC]">
+        <div className="flex-1 overflow-y-auto p-8 bg-[#F8FAFC] print:overflow-visible print:h-auto print:p-0 print:bg-white">
           <AnimatePresence mode="wait">
             
             {/* VISTA: FORMULARIO DE REGISTRO */}

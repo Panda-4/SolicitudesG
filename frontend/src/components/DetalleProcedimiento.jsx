@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft, Calendar, Clock, Gavel, Link2, Megaphone,
-  FolderOpen, Hash, CheckCircle2, ExternalLink
+  FolderOpen, Hash, CheckCircle2, ExternalLink, Printer
 } from 'lucide-react';
 
 const CRONOGRAMA_LABELS = [
@@ -35,17 +35,23 @@ const DetalleProcedimiento = ({ procedimiento, onBack }) => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-5xl mx-auto bg-white rounded-[40px] shadow-2xl overflow-hidden border border-slate-100"
+        className="max-w-5xl mx-auto bg-white rounded-[40px] shadow-2xl overflow-hidden border border-slate-100 print:shadow-none print:border-0 print:rounded-none"
       >
         {/* Barra Decorativa */}
         <div className="h-4 w-full bg-gradient-to-r from-[#9D2449] via-[#B38E5D] to-[#9D2449]" />
 
         <div className="p-12 md:p-16">
-          {/* Botón Volver */}
-          <button onClick={onBack}
-            className="flex items-center gap-2 text-[#9D2449] font-black uppercase text-xs tracking-widest mb-10 hover:gap-3 transition-all">
-            <ArrowLeft size={16} /> Volver a Consulta
-          </button>
+          {/* Acciones Superiores */}
+          <div className="flex items-center justify-between mb-10 print:hidden">
+            <button onClick={onBack}
+              className="flex items-center gap-2 text-[#9D2449] font-black uppercase text-xs tracking-widest hover:gap-3 transition-all">
+              <ArrowLeft size={16} /> Volver a Consulta
+            </button>
+            <button onClick={() => window.print()} className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-500 rounded-xl hover:text-[#9D2449] hover:border-[#9D2449] transition-all shadow-sm font-bold text-sm">
+              <Printer size={18} />
+              Descargar PDF
+            </button>
+          </div>
 
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-8 mb-12 border-b border-slate-50 pb-10">

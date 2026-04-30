@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, FolderOpen, ClipboardCheck, DollarSign, Gavel, Award,
   ChevronDown, ExternalLink, Calendar, Hash, FileText, Building2,
-  CheckCircle2, XCircle, Receipt, Shield, User, Clock
+  CheckCircle2, XCircle, Receipt, Shield, User, Clock, Printer
 } from 'lucide-react';
 
 const ETAPAS = [
@@ -97,6 +97,20 @@ const DetalleExpedienteCompleto = ({ item, onBack }) => {
 
   const toggle = (key) => setSections(prev => ({ ...prev, [key]: !prev[key] }));
 
+  const handlePrint = () => {
+    // Expandir todas las secciones antes de imprimir
+    setSections({
+      estudio: true,
+      afectacion: true,
+      procedimiento: true,
+      adjudicacion: true,
+    });
+    // Dar un pequeño timeout para que las animaciones terminen de abrir los contenedores
+    setTimeout(() => {
+      window.print();
+    }, 400);
+  };
+
   const progresoColor = (p) => {
     if (p >= 100) return '#059669';
     if (p >= 75) return '#6366f1';
@@ -106,19 +120,29 @@ const DetalleExpedienteCompleto = ({ item, onBack }) => {
 
   return (
     <div className="space-y-6 pb-10">
-      {/* Botón Volver */}
-      <motion.button
-        initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
-        onClick={onBack}
-        className="flex items-center gap-2 text-slate-400 hover:text-[#9D2449] transition-colors font-black text-xs uppercase tracking-widest">
-        <ArrowLeft size={16} /> Volver al Panel de Control
-      </motion.button>
+      {/* Acciones Superiores (Ocultas al Imprimir) */}
+      <div className="flex items-center justify-between print:hidden">
+        <motion.button
+          initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
+          onClick={onBack}
+          className="flex items-center gap-2 text-slate-400 hover:text-[#9D2449] transition-colors font-black text-xs uppercase tracking-widest">
+          <ArrowLeft size={16} /> Volver al Panel de Control
+        </motion.button>
+        
+        <motion.button
+          initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }}
+          onClick={handlePrint}
+          className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl font-bold hover:text-[#9D2449] hover:border-[#9D2449] hover:bg-[#9D2449]/5 transition-all shadow-sm">
+          <Printer size={18} />
+          Imprimir / Exportar PDF
+        </motion.button>
+      </div>
 
       {/* ═══════════════════════════════════════════════════ */}
       {/* ENCABEZADO DEL EXPEDIENTE                          */}
       {/* ═══════════════════════════════════════════════════ */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-[32px] shadow-xl border border-slate-100 overflow-hidden">
+        className="bg-white rounded-[32px] shadow-xl border border-slate-100 overflow-hidden print:shadow-none print:border-b-2 print:border-slate-800 print:rounded-none print:mb-8">
         
         {/* Barra de progreso en top */}
         <div className="h-2 bg-slate-100">
@@ -208,7 +232,7 @@ const DetalleExpedienteCompleto = ({ item, onBack }) => {
       {/* SECCIÓN 1: ESTUDIO DE MERCADO                      */}
       {/* ═══════════════════════════════════════════════════ */}
       <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-        className="bg-white rounded-[28px] shadow-lg border border-slate-100 overflow-hidden">
+        className="bg-white rounded-[28px] shadow-lg border border-slate-100 overflow-hidden print:shadow-none print:border-0 print:border-t-2 print:border-slate-800 print:rounded-none print:break-inside-avoid">
         <SectionHeader icon={ClipboardCheck} title="Estudio de Mercado" count={item.totalEstudios}
           color="#9D2449" expanded={sections.estudio} onToggle={() => toggle('estudio')} />
         <AnimatePresence>
@@ -250,7 +274,7 @@ const DetalleExpedienteCompleto = ({ item, onBack }) => {
       {/* SECCIÓN 2: AFECTACIÓN PRESUPUESTAL                 */}
       {/* ═══════════════════════════════════════════════════ */}
       <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-        className="bg-white rounded-[28px] shadow-lg border border-slate-100 overflow-hidden">
+        className="bg-white rounded-[28px] shadow-lg border border-slate-100 overflow-hidden print:shadow-none print:border-0 print:border-t-2 print:border-slate-800 print:rounded-none print:break-inside-avoid print:mt-8">
         <SectionHeader icon={Receipt} title="Afectación Presupuestal" count={item.totalAfectaciones}
           color="#B38E5D" expanded={sections.afectacion} onToggle={() => toggle('afectacion')} />
         <AnimatePresence>
@@ -293,7 +317,7 @@ const DetalleExpedienteCompleto = ({ item, onBack }) => {
       {/* SECCIÓN 3: PROCEDIMIENTO ADQUISITIVO               */}
       {/* ═══════════════════════════════════════════════════ */}
       <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-        className="bg-white rounded-[28px] shadow-lg border border-slate-100 overflow-hidden">
+        className="bg-white rounded-[28px] shadow-lg border border-slate-100 overflow-hidden print:shadow-none print:border-0 print:border-t-2 print:border-slate-800 print:rounded-none print:break-inside-avoid print:mt-8">
         <SectionHeader icon={Gavel} title="Procedimiento Adquisitivo" count={item.totalProcedimientos}
           color="#6366f1" expanded={sections.procedimiento} onToggle={() => toggle('procedimiento')} />
         <AnimatePresence>
@@ -354,7 +378,7 @@ const DetalleExpedienteCompleto = ({ item, onBack }) => {
       {/* SECCIÓN 4: ADJUDICACIÓN                            */}
       {/* ═══════════════════════════════════════════════════ */}
       <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
-        className="bg-white rounded-[28px] shadow-lg border border-slate-100 overflow-hidden">
+        className="bg-white rounded-[28px] shadow-lg border border-slate-100 overflow-hidden print:shadow-none print:border-0 print:border-t-2 print:border-slate-800 print:rounded-none print:break-inside-avoid print:mt-8">
         <SectionHeader icon={Award} title="Adjudicación y Seguimiento" count={item.totalAdjudicaciones}
           color="#059669" expanded={sections.adjudicacion} onToggle={() => toggle('adjudicacion')} />
         <AnimatePresence>
