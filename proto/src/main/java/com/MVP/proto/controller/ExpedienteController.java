@@ -2,6 +2,7 @@ package com.MVP.proto.controller;
 
 import com.MVP.proto.model.*;
 import com.MVP.proto.repository.*;
+import com.MVP.proto.service.AuditService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +25,8 @@ public class ExpedienteController {
     private ProcedimientoRepository procedimientoRepo;
     @Autowired
     private AdjudicacionRepository adjudicacionRepo;
+    @Autowired
+    private AuditService auditService;
 
     // Listar todos los expedientes (para dropdowns en otros módulos)
     @GetMapping
@@ -37,6 +40,49 @@ public class ExpedienteController {
         return expedienteRepo.findById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    // PUT — Editar Expediente (Solo ADMIN)
+    @PutMapping("/{id}")
+    public ResponseEntity<?> editarExpediente(@PathVariable Long id, @RequestBody Expediente datosNuevos) {
+        return expedienteRepo.findById(id).map(existente -> {
+            Map<String, Object> antes = clonarParaAudit(existente);
+
+            if (datosNuevos.getEstatusGeneral() != null) existente.setEstatusGeneral(datosNuevos.getEstatusGeneral());
+            if (datosNuevos.getDependencia() != null) existente.setDependencia(datosNuevos.getDependencia());
+            if (datosNuevos.getDescripcionBreve() != null) existente.setDescripcionBreve(datosNuevos.getDescripcionBreve());
+
+            Expediente actualizado = expedienteRepo.save(existente);
+
+            auditService.registrar("UPDATE", "EXPEDIENTE", id,
+                    existente.getFolioExpediente(), antes, actualizado,
+                    "Expediente editado");
+
+            return ResponseEntity.ok(actualizado);
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
+    // DELETE — Eliminar Expediente (Solo ADMIN)
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> eliminarExpediente(@PathVariable Long id) {
+        return expedienteRepo.findById(id).map(expediente -> {
+            // Verificar si tiene registros hijos
+            boolean tieneEstudios = estudioRepo.findAll().stream().anyMatch(e -> e.getExpediente() != null && e.getExpediente().getId().equals(id));
+            boolean tieneAfectaciones = afectacionRepo.findAll().stream().anyMatch(a -> a.getExpediente() != null && a.getExpediente().getId().equals(id));
+            boolean tieneProcedimientos = procedimientoRepo.findAll().stream().anyMatch(p -> p.getExpediente() != null && p.getExpediente().getId().equals(id));
+            boolean tieneAdjudicaciones = adjudicacionRepo.findAll().stream().anyMatch(a -> a.getExpediente() != null && a.getExpediente().getId().equals(id));
+
+            if (tieneEstudios || tieneAfectaciones || tieneProcedimientos || tieneAdjudicaciones) {
+                return ResponseEntity.badRequest().body("No se puede eliminar el expediente porque tiene registros hijos vinculados. Elimine primero los registros individuales.");
+            }
+
+            auditService.registrar("DELETE", "EXPEDIENTE", id,
+                    expediente.getFolioExpediente(), expediente, null,
+                    "Expediente eliminado: " + expediente.getFolioExpediente());
+
+            expedienteRepo.delete(expediente);
+            return ResponseEntity.ok().build();
+        }).orElse(ResponseEntity.notFound().build());
     }
 
     // === TRAZABILIDAD COMPLETA ===
@@ -100,5 +146,15 @@ public class ExpedienteController {
         }
 
         return resultado;
+    }
+
+    private Map<String, Object> clonarParaAudit(Expediente e) {
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("id", e.getId());
+        map.put("folioExpediente", e.getFolioExpediente());
+        map.put("dependencia", e.getDependencia());
+        map.put("estatusGeneral", e.getEstatusGeneral());
+        map.put("descripcionBreve", e.getDescripcionBreve());
+        return map;
     }
 }

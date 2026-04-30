@@ -6,7 +6,7 @@ import {
   DollarSign, Calendar, Link2, MessageSquare, Receipt, Gavel, Hash
 } from 'lucide-react';
 
-const FormularioAdjudicacion = ({ onSuccess }) => {
+const FormularioAdjudicacion = ({ onSuccess, recordToEdit }) => {
   const [expedientes, setExpedientes] = useState([]);
   const [afectaciones, setAfectaciones] = useState([]);
   const [procedimientos, setProcedimientos] = useState([]);
@@ -32,6 +32,30 @@ const FormularioAdjudicacion = ({ onSuccess }) => {
     comentarios: '',
     estatus: 'Adjudicado',
   });
+
+  // Cargar datos de edición si existen
+  useEffect(() => {
+    if (recordToEdit) {
+      setFormData({
+        folioInterno: recordToEdit.folioInterno || '',
+        nombreRazonSocial: recordToEdit.nombreRazonSocial || '',
+        rfc: recordToEdit.rfc || '',
+        montoTotalConIva: recordToEdit.montoTotalConIva || '',
+        numeroContrato: recordToEdit.numeroContrato || '',
+        inicioVigencia: recordToEdit.inicioVigencia || '',
+        terminoVigencia: recordToEdit.terminoVigencia || '',
+        publicacionTestigoUrl: recordToEdit.publicacionTestigoUrl || '',
+        remanenteSuficiencia: recordToEdit.remanenteSuficiencia || '',
+        nombreResponsable: recordToEdit.nombreResponsable || '',
+        comentarios: recordToEdit.comentarios || '',
+        estatus: recordToEdit.estatus || 'Adjudicado',
+      });
+      if (recordToEdit.expediente) {
+        setSelectedExpedienteId(recordToEdit.expediente.id.toString());
+      }
+      setReprogramacion(recordToEdit.reprogramacion || false);
+    }
+  }, [recordToEdit]);
 
   useEffect(() => {
     const cargar = async () => {
@@ -73,8 +97,13 @@ const FormularioAdjudicacion = ({ onSuccess }) => {
         ...formData,
         reprogramacion,
       };
-      await axios.post('http://localhost:8080/api/adjudicaciones', datos);
-      alert('✅ Adjudicación guardada exitosamente');
+      if (recordToEdit && recordToEdit.id) {
+        await axios.put(`http://localhost:8080/api/adjudicaciones/${recordToEdit.id}`, datos);
+        alert('✅ Registro actualizado exitosamente en la Base de Datos');
+      } else {
+        await axios.post('http://localhost:8080/api/adjudicaciones', datos);
+        alert('✅ Adjudicación guardada exitosamente');
+      }
       handleLimpiar();
       if (onSuccess) onSuccess();
     } catch (error) {
@@ -103,7 +132,9 @@ const FormularioAdjudicacion = ({ onSuccess }) => {
                 <div className="p-2 rounded-xl bg-[#9D2449]/10">
                   <Award size={24} className="text-[#9D2449]" />
                 </div>
-                <h1 className="text-4xl font-black tracking-tight text-slate-900">Adjudicación</h1>
+                <h1 className="text-4xl font-black tracking-tight text-slate-900">
+                  {recordToEdit ? 'Editar Adjudicación' : 'Adjudicación'}
+                </h1>
               </div>
               <p className="font-bold uppercase text-[10px] tracking-[0.3em] ml-12 text-slate-400">Módulo de Formalización y Seguimiento</p>
             </div>
@@ -305,7 +336,7 @@ const FormularioAdjudicacion = ({ onSuccess }) => {
             </button>
             <button type="button" onClick={handleGuardar}
               className="px-20 py-5 font-black rounded-[24px] shadow-2xl transition-all transform hover:-translate-y-1 bg-[#9D2449] text-white shadow-[#9D2449]/30 hover:bg-[#7a1c39]">
-              Guardar Adjudicación
+              {recordToEdit ? 'Actualizar Adjudicación' : 'Guardar Adjudicación'}
             </button>
           </div>
         </div>

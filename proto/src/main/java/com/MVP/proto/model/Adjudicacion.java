@@ -28,7 +28,11 @@ public class Adjudicacion {
     private String rfc;
     private String montoTotalConIva; // $MXN
     private String numeroContrato;
-    private String inicioVigencia; // Fecha
+    private String vigenciaInicio;
+    private String vigenciaFin;
+    private String montoMaximo;
+    private String estatusAdjudicacion;
+    private String instrumentoNotarial;
     private String terminoVigencia; // Fecha
     private String publicacionTestigoUrl; // URL del testimonio
     private String remanenteSuficiencia; // $MXN

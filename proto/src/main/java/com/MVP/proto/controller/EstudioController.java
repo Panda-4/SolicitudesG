@@ -4,6 +4,7 @@ import com.MVP.proto.model.EstudioMercado;
 import com.MVP.proto.model.Expediente;
 import com.MVP.proto.repository.EstudioRepository;
 import com.MVP.proto.repository.ExpedienteRepository;
+import com.MVP.proto.service.AuditService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,7 +23,10 @@ public class EstudioController {
     @Autowired
     private ExpedienteRepository expedienteRepo;
 
-    // Endpoint para GUARDAR (POST) - Ahora auto-crea Expediente
+    @Autowired
+    private AuditService auditService;
+
+    // Endpoint para GUARDAR (POST) - Auto-crea Expediente
     @PostMapping
     public ResponseEntity<EstudioMercado> guardarEstudio(@RequestBody EstudioMercado estudio) {
         
@@ -51,6 +55,11 @@ public class EstudioController {
              nuevoEstudio.setFolio("EM-2026-" + nuevoEstudio.getId());
              estudioRepo.save(nuevoEstudio);
         }
+
+        // 5. Auditoría
+        auditService.registrar("CREATE", "ESTUDIO", nuevoEstudio.getId(),
+                nuevoEstudio.getFolio(), null, nuevoEstudio,
+                "Nuevo estudio de mercado registrado");
         
         return ResponseEntity.ok(nuevoEstudio);
     }
@@ -60,4 +69,60 @@ public class EstudioController {
     public List<EstudioMercado> getListaEstudios() {
         return estudioRepo.findAllByOrderByFechaIngresoDesc();
     }
-}
+
+    // Endpoint para EDITAR (PUT) — Solo ADMIN
+    @PutMapping("/{id}")
+    public ResponseEntity<?> editarEstudio(@PathVariable Long id, @RequestBody EstudioMercado datosNuevos) {
+        return estudioRepo.findById(id).map(existente -> {
+            // Snapshot antes
+            EstudioMercado antes = new EstudioMercado();
+            antes.setId(existente.getId());
+            antes.setFolio(existente.getFolio());
+            antes.setDependencia(existente.getDependencia());
+            antes.setCentroCosto(existente.getCentroCosto());
+            antes.setOrigenRecurso(existente.getOrigenRecurso());
+            antes.setCapitulo(existente.getCapitulo());
+            antes.setPartida(existente.getPartida());
+            antes.setGiro(existente.getGiro());
+            antes.setValorEstudio(existente.getValorEstudio());
+            antes.setEstatus(existente.getEstatus());
+            antes.setMontoSabys(existente.getMontoSabys());
+            antes.setDescripcionBien(existente.getDescripcionBien());
+            antes.setContratacionPlurianual(existente.getContratacionPlurianual());
+
+            // Aplicar cambios
+            if (datosNuevos.getDependencia() != null) existente.setDependencia(datosNuevos.getDependencia());
+            if (datosNuevos.getCentroCosto() != null) existente.setCentroCosto(datosNuevos.getCentroCosto());
+            if (datosNuevos.getOrigenRecurso() != null) existente.setOrigenRecurso(datosNuevos.getOrigenRecurso());
+            if (datosNuevos.getCapitulo() != null) existente.setCapitulo(datosNuevos.getCapitulo());
+            if (datosNuevos.getPartida() != null) existente.setPartida(datosNuevos.getPartida());
+            if (datosNuevos.getGiro() != null) existente.setGiro(datosNuevos.getGiro());
+            if (datosNuevos.getValorEstudio() != null) existente.setValorEstudio(datosNuevos.getValorEstudio());
+            if (datosNuevos.getEstatus() != null) existente.setEstatus(datosNuevos.getEstatus());
+            if (datosNuevos.getMontoSabys() != null) existente.setMontoSabys(datosNuevos.getMontoSabys());
+            if (datosNuevos.getDescripcionBien() != null) existente.setDescripcionBien(datosNuevos.getDescripcionBien());
+            if (datosNuevos.getContratacionPlurianual() != null) existente.setContratacionPlurianual(datosNuevos.getContratacionPlurianual());
+
+            EstudioMercado actualizado = estudioRepo.save(existente);
+
+            auditService.registrar("UPDATE", "ESTUDIO", id,
+                    existente.getFolio(), antes, actualizado,
+                    "Estudio de mercado editado");
+
+            return ResponseEntity.ok(actualizado);
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
+    // Endpoint para ELIMINAR (DELETE) — Solo ADMIN
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> eliminarEstudio(@PathVariable Long id) {
+        return estudioRepo.findById(id).map(estudio -> {
+            auditService.registrar("DELETE", "ESTUDIO", id,
+                    estudio.getFolio(), estudio, null,
+                    "Estudio de mercado eliminado: " + estudio.getFolio());
+
+            estudioRepo.delete(estudio);
+            return ResponseEntity.ok().build();
+        }).orElse(ResponseEntity.notFound().build());
+    }
+}

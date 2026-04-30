@@ -38,7 +38,7 @@ const initCronograma = () =>
     return acc;
   }, {});
 
-const FormularioAdquisicion = ({ onSuccess }) => {
+const FormularioAdquisicion = ({ onSuccess, recordToEdit }) => {
   const [expedientes, setExpedientes] = useState([]);
   const [afectaciones, setAfectaciones] = useState([]);
   const [selectedExpedienteId, setSelectedExpedienteId] = useState('');
@@ -55,6 +55,32 @@ const FormularioAdquisicion = ({ onSuccess }) => {
   });
 
   const [cronograma, setCronograma] = useState(initCronograma());
+
+  // Cargar datos de edición si existen
+  useEffect(() => {
+    if (recordToEdit) {
+      setFormData({
+        noProcedimiento: recordToEdit.noProcedimiento || '',
+        modalidadProcedimiento: recordToEdit.modalidadProcedimiento || '',
+        convocatoriaUrl: recordToEdit.convocatoriaUrl || '',
+        medioPublicacion: recordToEdit.medioPublicacion || '',
+        estatus: recordToEdit.estatus || 'En Proceso',
+      });
+      if (recordToEdit.expediente) {
+        setSelectedExpedienteId(recordToEdit.expediente.id.toString());
+      }
+      const loadDate = (f, h) => ({ fecha: f || '', hora: h ? h.substring(0, 5) : '' });
+      setCronograma({
+        juntaAclaracion: loadDate(recordToEdit.fechaJuntaAclaracion, recordToEdit.horaJuntaAclaracion),
+        presentacionApertura: loadDate(recordToEdit.fechaPresentacionApertura, recordToEdit.horaPresentacionApertura),
+        sesionComite: loadDate(recordToEdit.fechaSesionComite, recordToEdit.horaSesionComite),
+        contraOferta: loadDate(recordToEdit.fechaContraOferta, recordToEdit.horaContraOferta),
+        dictaminacion: loadDate(recordToEdit.fechaDictaminacion, recordToEdit.horaDictaminacion),
+        sesionSubcomite: loadDate(recordToEdit.fechaSesionSubcomite, recordToEdit.horaSesionSubcomite),
+        fallo: loadDate(recordToEdit.fechaFallo, recordToEdit.horaFallo),
+      });
+    }
+  }, [recordToEdit]);
 
   useEffect(() => {
     const cargar = async () => {
@@ -100,13 +126,19 @@ const FormularioAdquisicion = ({ onSuccess }) => {
         horaContraOferta: cronograma.contraOferta.hora,
         fechaDictaminacion: cronograma.dictaminacion.fecha,
         horaDictaminacion: cronograma.dictaminacion.hora,
-        fechaSesionSubcomite: cronograma.sesionSubcomite.fecha,
         horaSesionSubcomite: cronograma.sesionSubcomite.hora,
         fechaFallo: cronograma.fallo.fecha,
         horaFallo: cronograma.fallo.hora,
       };
-      await axios.post('http://localhost:8080/api/procedimientos', datos);
-      alert('✅ Procedimiento guardado exitosamente');
+      
+      if (recordToEdit && recordToEdit.id) {
+        await axios.put(`http://localhost:8080/api/procedimientos/${recordToEdit.id}`, datos);
+        alert('✅ Registro actualizado exitosamente en la Base de Datos');
+      } else {
+        await axios.post('http://localhost:8080/api/procedimientos', datos);
+        alert('✅ Procedimiento guardado exitosamente');
+      }
+      
       handleLimpiar();
       if (onSuccess) onSuccess();
     } catch (error) {
@@ -136,7 +168,9 @@ const FormularioAdquisicion = ({ onSuccess }) => {
                 <div className="p-2 rounded-xl bg-[#9D2449]/10">
                   <Gavel size={24} className="text-[#9D2449]" />
                 </div>
-                <h1 className="text-4xl font-black tracking-tight text-slate-900">Adquisiciones y Contratación</h1>
+                <h1 className="text-4xl font-black tracking-tight text-slate-900">
+                  {recordToEdit ? 'Editar Procedimiento' : 'Adquisiciones y Contratación'}
+                </h1>
               </div>
               <p className="font-bold uppercase text-[10px] tracking-[0.3em] ml-12 text-slate-400">Módulo de Procedimientos Adquisitivos</p>
             </div>
@@ -401,7 +435,7 @@ const FormularioAdquisicion = ({ onSuccess }) => {
             </button>
             <button type="button" onClick={handleGuardar}
               className="px-20 py-5 font-black rounded-[24px] shadow-2xl transition-all transform hover:-translate-y-1 bg-[#9D2449] text-white shadow-[#9D2449]/30 hover:bg-[#7a1c39]">
-              Guardar Procedimiento
+              {recordToEdit ? 'Actualizar Procedimiento' : 'Guardar Procedimiento'}
             </button>
           </div>
 

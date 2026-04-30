@@ -31,7 +31,11 @@ public class AfectacionPresupuestal {
     private String testigoSocial;
     private String tipoGasto; // Gasto Corriente, Gasto de Inversión, Otros
     private String fuenteFinanciamiento; // Estatal, Federal, Mixto, Otros
-    private String importeSuficiencia; // Monto $MXN
+    private String montoAfectado;
+    private String partidaPresupuestal;
+    private String estatusSuficiencia;
+    private String fechaSuficiencia;
+    private String observaciones; // Monto $MXN
     private String oficioSuficiencia; // Número de oficio
     private String claveVerificacion; // Clave alfanumérica
     private String descripcionClave; // Descripción amplia (textarea)

@@ -222,6 +222,18 @@ const Sidebar = ({ view, setView, currentUser, handleLogout, hasPermission }) =>
               <span className="font-bold text-sm">Configuración</span>
               {isActive('settings') && <motion.div layoutId="sidebar-indicator" className="ml-auto w-1.5 h-6 bg-white rounded-full" />}
             </button>
+            <button
+              onClick={() => setView('audit')}
+              className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl transition-all group ${
+                isActive('audit')
+                  ? 'bg-[#9D2449] text-white shadow-xl shadow-[#9D2449]/20'
+                  : 'text-slate-500 hover:bg-slate-50 hover:text-[#9D2449]'
+              }`}
+            >
+              <ClipboardCheck size={20} className={isActive('audit') ? 'text-white' : 'group-hover:text-[#9D2449]'} />
+              <span className="font-bold text-sm">Auditoría</span>
+              {isActive('audit') && <motion.div layoutId="sidebar-indicator" className="ml-auto w-1.5 h-6 bg-white rounded-full" />}
+            </button>
           </div>
         )}
 

@@ -44,6 +44,10 @@ public class ProcedimientoAdquisitivo {
     private String fechaFallo;
     private String horaFallo;
 
+    // === CAMPOS USADOS POR EL CONTROLLER ===
+    private String montoAdjudicado;
+    private String estatusProcedimiento;
+
     private String estatus; // En Proceso, Adjudicado, Desierto
     private String fechaRegistro;
 }

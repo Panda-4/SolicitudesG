@@ -380,8 +380,8 @@ const DEFAULT_PARTIDAS = [
   { clave: '5700', nombre: 'Activos Biológicos' }
 ];
 
-// El componente recibe 'onSuccess' como prop desde App.jsx
-const FormularioEstudio = ({ onSuccess }) => {
+// El componente recibe 'onSuccess' y 'recordToEdit' como prop desde App.jsx
+const FormularioEstudio = ({ onSuccess, recordToEdit }) => {
   // Inicializamos estados con listas locales por si Java falla
   const [partidas, setPartidas] = useState(DEFAULT_PARTIDAS.map((p, i) => ({ id: i + 1, ...p })));
   const [fecha, setFecha] = useState(dayjs());
@@ -396,6 +396,28 @@ const FormularioEstudio = ({ onSuccess }) => {
     partida: '', giro: '', valor: '', estatus: 'Pendiente de Validación', 
     montoSabys: '', descripcionBien: ''
   });
+
+  // Cargar datos de edición si existen
+  useEffect(() => {
+    if (recordToEdit) {
+      setFormData({
+        dependencia: recordToEdit.dependencia || '',
+        centroCosto: recordToEdit.centroCosto || '',
+        origenRecurso: recordToEdit.origenRecurso || '',
+        capitulo: recordToEdit.capitulo || '',
+        partida: recordToEdit.partida || '',
+        giro: recordToEdit.giro || '',
+        valor: recordToEdit.valorEstudio || '',
+        estatus: recordToEdit.estatus || 'Pendiente de Validación',
+        montoSabys: recordToEdit.montoSabys || '',
+        descripcionBien: recordToEdit.descripcionBien || ''
+      });
+      if (recordToEdit.fechaIngreso) {
+        setFecha(dayjs(recordToEdit.fechaIngreso));
+      }
+      setPlurianual(recordToEdit.contratacionPlurianual || false);
+    }
+  }, [recordToEdit]);
 
   // Cargar catálogos desde Java al iniciar
   useEffect(() => {
@@ -434,8 +456,13 @@ const FormularioEstudio = ({ onSuccess }) => {
       };
       
       // Enviar a tu Backend Java
-      await axios.post('http://localhost:8080/api/estudios', datosAEnviar);
-      alert('✅ Solicitud guardada exitosamente en la Base de Datos');
+      if (recordToEdit && recordToEdit.id) {
+        await axios.put(`http://localhost:8080/api/estudios/${recordToEdit.id}`, datosAEnviar);
+        alert('✅ Registro actualizado exitosamente en la Base de Datos');
+      } else {
+        await axios.post('http://localhost:8080/api/estudios', datosAEnviar);
+        alert('✅ Solicitud guardada exitosamente en la Base de Datos');
+      }
       
       // Limpiar formulario
       setFormData({
@@ -482,7 +509,9 @@ const FormularioEstudio = ({ onSuccess }) => {
                   <div className="p-2 rounded-xl bg-[#9D2449]/5">
                     <Building2 size={24} className="text-[#9D2449]" />
                   </div>
-                  <h1 className="text-4xl font-black tracking-tight text-slate-900">Estudio de Mercado</h1>
+                  <h1 className="text-4xl font-black tracking-tight text-slate-900">
+                    {recordToEdit ? 'Editar Estudio de Mercado' : 'Estudio de Mercado'}
+                  </h1>
                 </div>
                 <p className="font-bold uppercase text-[10px] tracking-[0.3em] ml-12 text-slate-400">Módulo de Registro y Planeación Técnica</p>
               </div>
@@ -490,7 +519,9 @@ const FormularioEstudio = ({ onSuccess }) => {
               {/* Folio Flotante */}
               <div className="border-2 p-5 rounded-[32px] shadow-lg min-w-[280px] group transition-all bg-white border-[#B38E5D] focus-within:border-[#9D2449] shadow-[#B38E5D]/10">
                 <p className="text-[10px] font-black uppercase tracking-widest mb-1 text-center text-[#B38E5D]">Folio del Sistema</p>
-                <p className="w-full text-2xl font-black text-center font-mono bg-transparent outline-none text-[#9D2449]">EM-2026-{Math.floor(Math.random() * 9000) + 1000}</p>
+                <p className="w-full text-2xl font-black text-center font-mono bg-transparent outline-none text-[#9D2449]">
+                  {recordToEdit ? recordToEdit.folio : `EM-2026-${Math.floor(Math.random() * 9000) + 1000}`}
+                </p>
               </div>
             </div>
 
@@ -751,7 +782,7 @@ const FormularioEstudio = ({ onSuccess }) => {
                 onClick={handleGuardar}
                 className="px-20 py-5 font-black rounded-[24px] shadow-2xl transition-all transform hover:-translate-y-1 bg-[#9D2449] text-white shadow-[#9D2449]/30 hover:bg-[#7a1c39]"
               >
-                Guardar Solicitud
+                {recordToEdit ? 'Actualizar Solicitud' : 'Guardar Solicitud'}
               </button>
             </div>
 

@@ -3,8 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, FolderOpen, ClipboardCheck, DollarSign, Gavel, Award,
   ChevronDown, ExternalLink, Calendar, Hash, FileText, Building2,
-  CheckCircle2, XCircle, Receipt, Shield, User, Clock, Printer
+  CheckCircle2, XCircle, Receipt, Shield, User, Clock, Printer, Edit3, Trash2
 } from 'lucide-react';
+import { getUser } from '../services/authService';
+import ConfirmModal from './ConfirmModal';
 
 const ETAPAS = [
   { key: 'Estudio de Mercado', icon: ClipboardCheck, color: '#9D2449' },
@@ -86,8 +88,16 @@ const BadgeEstatus = ({ estatus }) => {
   );
 };
 
-const DetalleExpedienteCompleto = ({ item, onBack }) => {
+const DetalleExpedienteCompleto = ({ item, onBack, onEditRecord, onDeleteRecord }) => {
   const exp = item.expediente;
+  const isAdmin = getUser()?.rol === 'ADMINISTRADOR';
+
+  // Estado para el modal de confirmación
+  const [confirmData, setConfirmData] = useState({ isOpen: false, type: null, id: null, folio: '' });
+
+  const openConfirm = (type, id, folio) => setConfirmData({ isOpen: true, type, id, folio });
+  const closeConfirm = () => setConfirmData({ isOpen: false, type: null, id: null, folio: '' });
+
   const [sections, setSections] = useState({
     estudio: true,
     afectacion: true,
@@ -259,6 +269,16 @@ const DetalleExpedienteCompleto = ({ item, onBack }) => {
                     <Campo label="Contratación Plurianual" value={est.contratacionPlurianual} isBool />
                     <Campo label="Descripción del Bien" value={est.descripcionBien} isLong icon={FileText} />
                   </div>
+                  {isAdmin && (
+                    <div className="mt-4 flex justify-end gap-3 print:hidden">
+                      <button onClick={() => onEditRecord && onEditRecord('estudio', est)} className="px-4 py-2 bg-slate-50 border border-[#B38E5D] text-[#B38E5D] rounded-xl hover:bg-[#B38E5D] hover:text-white transition-colors text-xs font-bold flex items-center gap-2">
+                        <Edit3 size={14} /> Editar
+                      </button>
+                      <button onClick={() => openConfirm('estudio', est.id, est.folio)} className="px-4 py-2 bg-slate-50 border border-[#9D2449] text-[#9D2449] rounded-xl hover:bg-[#9D2449] hover:text-white transition-colors text-xs font-bold flex items-center gap-2">
+                        <Trash2 size={14} /> Eliminar
+                      </button>
+                    </div>
+                  )}
                 </div>
               )) : (
                 <div className="p-8 text-center text-slate-300 font-bold uppercase text-xs tracking-widest italic">
@@ -302,6 +322,16 @@ const DetalleExpedienteCompleto = ({ item, onBack }) => {
                     <Campo label="Fecha de Registro" value={af.fechaRegistro} icon={Calendar} />
                     <Campo label="Descripción Clave" value={af.descripcionClave} isLong icon={FileText} />
                   </div>
+                  {isAdmin && (
+                    <div className="mt-4 flex justify-end gap-3 print:hidden">
+                      <button onClick={() => onEditRecord && onEditRecord('afectacion', af)} className="px-4 py-2 bg-slate-50 border border-[#B38E5D] text-[#B38E5D] rounded-xl hover:bg-[#B38E5D] hover:text-white transition-colors text-xs font-bold flex items-center gap-2">
+                        <Edit3 size={14} /> Editar
+                      </button>
+                      <button onClick={() => openConfirm('afectacion', af.id, af.folioCa)} className="px-4 py-2 bg-slate-50 border border-[#9D2449] text-[#9D2449] rounded-xl hover:bg-[#9D2449] hover:text-white transition-colors text-xs font-bold flex items-center gap-2">
+                        <Trash2 size={14} /> Eliminar
+                      </button>
+                    </div>
+                  )}
                 </div>
               )) : (
                 <div className="p-8 text-center text-slate-300 font-bold uppercase text-xs tracking-widest italic">
@@ -363,6 +393,16 @@ const DetalleExpedienteCompleto = ({ item, onBack }) => {
                       ))}
                     </div>
                   </div>
+                  {isAdmin && (
+                    <div className="mt-4 flex justify-end gap-3 print:hidden">
+                      <button onClick={() => onEditRecord && onEditRecord('procedimiento', proc)} className="px-4 py-2 bg-slate-50 border border-[#B38E5D] text-[#B38E5D] rounded-xl hover:bg-[#B38E5D] hover:text-white transition-colors text-xs font-bold flex items-center gap-2">
+                        <Edit3 size={14} /> Editar
+                      </button>
+                      <button onClick={() => openConfirm('procedimiento', proc.id, proc.noProcedimiento)} className="px-4 py-2 bg-slate-50 border border-[#9D2449] text-[#9D2449] rounded-xl hover:bg-[#9D2449] hover:text-white transition-colors text-xs font-bold flex items-center gap-2">
+                        <Trash2 size={14} /> Eliminar
+                      </button>
+                    </div>
+                  )}
                 </div>
               )) : (
                 <div className="p-8 text-center text-slate-300 font-bold uppercase text-xs tracking-widest italic">
@@ -406,6 +446,16 @@ const DetalleExpedienteCompleto = ({ item, onBack }) => {
                     <Campo label="URL Testigo Social" value={adj.publicacionTestigoUrl} isLink />
                     <Campo label="Comentarios / Observaciones" value={adj.comentarios} isLong icon={FileText} />
                   </div>
+                  {isAdmin && (
+                    <div className="mt-4 flex justify-end gap-3 print:hidden">
+                      <button onClick={() => onEditRecord && onEditRecord('adjudicacion', adj)} className="px-4 py-2 bg-slate-50 border border-[#B38E5D] text-[#B38E5D] rounded-xl hover:bg-[#B38E5D] hover:text-white transition-colors text-xs font-bold flex items-center gap-2">
+                        <Edit3 size={14} /> Editar
+                      </button>
+                      <button onClick={() => openConfirm('adjudicacion', adj.id, adj.folioInterno)} className="px-4 py-2 bg-slate-50 border border-[#9D2449] text-[#9D2449] rounded-xl hover:bg-[#9D2449] hover:text-white transition-colors text-xs font-bold flex items-center gap-2">
+                        <Trash2 size={14} /> Eliminar
+                      </button>
+                    </div>
+                  )}
                 </div>
               )) : (
                 <div className="p-8 text-center text-slate-300 font-bold uppercase text-xs tracking-widest italic">
@@ -416,6 +466,16 @@ const DetalleExpedienteCompleto = ({ item, onBack }) => {
           )}
         </AnimatePresence>
       </motion.div>
+
+      <ConfirmModal
+        isOpen={confirmData.isOpen}
+        onClose={closeConfirm}
+        onConfirm={() => {
+          if (onDeleteRecord) onDeleteRecord(confirmData.type, confirmData.id);
+        }}
+        title="Eliminar Registro"
+        message={`¿Estás seguro de que deseas eliminar permanentemente el registro ${confirmData.folio}? Esta acción no se puede deshacer y quedará registrada en auditoría.`}
+      />
     </div>
   );
 };

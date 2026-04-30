@@ -2,8 +2,10 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft, Calendar, Clock, Gavel, Link2, Megaphone,
-  FolderOpen, Hash, CheckCircle2, ExternalLink, Printer
+  FolderOpen, Hash, CheckCircle2, ExternalLink, Printer, Edit3, Trash2
 } from 'lucide-react';
+import { getUser } from '../services/authService';
+import ConfirmModal from './ConfirmModal';
 
 const CRONOGRAMA_LABELS = [
   { fechaKey: 'fechaJuntaAclaracion', horaKey: 'horaJuntaAclaracion', label: 'Junta de Aclaración' },
@@ -15,7 +17,10 @@ const CRONOGRAMA_LABELS = [
   { fechaKey: 'fechaFallo', horaKey: 'horaFallo', label: 'Fallo' },
 ];
 
-const DetalleProcedimiento = ({ procedimiento, onBack }) => {
+const DetalleProcedimiento = ({ procedimiento, onBack, onEdit, onDelete }) => {
+  const [isConfirmOpen, setIsConfirmOpen] = React.useState(false);
+  const isAdmin = getUser()?.rol === 'ADMINISTRADOR';
+
   if (!procedimiento) return null;
 
   const estatusColor = (estatus) => {
@@ -42,15 +47,33 @@ const DetalleProcedimiento = ({ procedimiento, onBack }) => {
 
         <div className="p-12 md:p-16">
           {/* Acciones Superiores */}
-          <div className="flex items-center justify-between mb-10 print:hidden">
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-10 print:hidden">
             <button onClick={onBack}
               className="flex items-center gap-2 text-[#9D2449] font-black uppercase text-xs tracking-widest hover:gap-3 transition-all">
               <ArrowLeft size={16} /> Volver a Consulta
             </button>
-            <button onClick={() => window.print()} className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-500 rounded-xl hover:text-[#9D2449] hover:border-[#9D2449] transition-all shadow-sm font-bold text-sm">
-              <Printer size={18} />
-              Descargar PDF
-            </button>
+            <div className="flex gap-3">
+              {isAdmin && (
+                <>
+                  <button
+                    onClick={() => onEdit && onEdit(procedimiento)}
+                    className="flex items-center gap-2 px-4 py-2 bg-white border border-[#B38E5D] text-[#B38E5D] rounded-xl hover:bg-[#B38E5D] hover:text-white transition-all shadow-sm font-bold text-sm"
+                  >
+                    <Edit3 size={18} /> Editar
+                  </button>
+                  <button
+                    onClick={() => setIsConfirmOpen(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-white border border-[#9D2449] text-[#9D2449] rounded-xl hover:bg-[#9D2449] hover:text-white transition-all shadow-sm font-bold text-sm"
+                  >
+                    <Trash2 size={18} /> Eliminar
+                  </button>
+                </>
+              )}
+              <button onClick={() => window.print()} className="flex items-center gap-2 px-4 py-2 bg-[#9D2449] text-white rounded-xl shadow-lg shadow-[#9D2449]/20 hover:bg-[#7a1c39] transition-all font-bold text-sm">
+                <Printer size={18} />
+                Descargar PDF
+              </button>
+            </div>
           </div>
 
           {/* Header */}
@@ -192,6 +215,14 @@ const DetalleProcedimiento = ({ procedimiento, onBack }) => {
 
         </div>
       </motion.div>
+
+      <ConfirmModal
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={() => onDelete && onDelete(procedimiento.id)}
+        title="Eliminar Procedimiento"
+        message={`¿Estás seguro de que deseas eliminar permanentemente el procedimiento adquisitivo con No. ${procedimiento.noProcedimiento}? Esta acción no se puede deshacer y quedará registrada en auditoría.`}
+      />
     </div>
   );
 };

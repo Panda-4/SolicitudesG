@@ -34,7 +34,7 @@ const UNIDADES_MEDIDA = [
   'Mes', 'Año', 'Evento', 'Unidad', 'Otros'
 ];
 
-const FormularioAfectacion = ({ onSuccess }) => {
+const FormularioAfectacion = ({ onSuccess, recordToEdit }) => {
   const [fecha, setFecha] = useState(dayjs());
   const [contratoAbierto, setContratoAbierto] = useState(false);
   const [consolidado, setConsolidado] = useState(false);
@@ -55,6 +55,32 @@ const FormularioAfectacion = ({ onSuccess }) => {
     unidadMedida: '',
     estatus: 'Pendiente de Validación',
   });
+
+  // Cargar datos de edición si existen
+  useEffect(() => {
+    if (recordToEdit) {
+      setFormData({
+        folioCa: recordToEdit.folioCa || '',
+        testigoSocial: recordToEdit.testigoSocial || '',
+        tipoGasto: recordToEdit.tipoGasto || '',
+        fuenteFinanciamiento: recordToEdit.fuenteFinanciamiento || '',
+        importeSuficiencia: recordToEdit.importeSuficiencia || '',
+        oficioSuficiencia: recordToEdit.oficioSuficiencia || '',
+        claveVerificacion: recordToEdit.claveVerificacion || '',
+        descripcionClave: recordToEdit.descripcionClave || '',
+        unidadMedida: recordToEdit.unidadMedida || '',
+        estatus: recordToEdit.estatus || 'Pendiente de Validación',
+      });
+      if (recordToEdit.fechaLiberacionEm) {
+        setFecha(dayjs(recordToEdit.fechaLiberacionEm));
+      }
+      setContratoAbierto(recordToEdit.contratoAbierto || false);
+      setConsolidado(recordToEdit.consolidado || false);
+      if (recordToEdit.expediente) {
+        setSelectedExpedienteId(recordToEdit.expediente.id.toString());
+      }
+    }
+  }, [recordToEdit]);
 
   // Cargar expedientes disponibles al iniciar
   useEffect(() => {
@@ -92,8 +118,13 @@ const FormularioAfectacion = ({ onSuccess }) => {
         consolidado: consolidado,
       };
       
-      await axios.post('http://localhost:8080/api/afectaciones', datosAEnviar);
-      alert('✅ Afectación Presupuestal guardada exitosamente en la Base de Datos');
+      if (recordToEdit && recordToEdit.id) {
+        await axios.put(`http://localhost:8080/api/afectaciones/${recordToEdit.id}`, datosAEnviar);
+        alert('✅ Registro actualizado exitosamente en la Base de Datos');
+      } else {
+        await axios.post('http://localhost:8080/api/afectaciones', datosAEnviar);
+        alert('✅ Afectación Presupuestal guardada exitosamente en la Base de Datos');
+      }
       
       // Limpiar formulario
       setFormData({
@@ -139,7 +170,9 @@ const FormularioAfectacion = ({ onSuccess }) => {
                   <div className="p-2 rounded-xl bg-[#B38E5D]/10">
                     <Receipt size={24} className="text-[#B38E5D]" />
                   </div>
-                  <h1 className="text-4xl font-black tracking-tight text-slate-900">Afectación Presupuestal</h1>
+                  <h1 className="text-4xl font-black tracking-tight text-slate-900">
+                    {recordToEdit ? 'Editar Afectación Presupuestal' : 'Afectación Presupuestal'}
+                  </h1>
                 </div>
                 <p className="font-bold uppercase text-[10px] tracking-[0.3em] ml-12 text-slate-400">Módulo de Suficiencia y Control Presupuestal</p>
               </div>
@@ -449,7 +482,7 @@ const FormularioAfectacion = ({ onSuccess }) => {
                 onClick={handleGuardar}
                 className="px-20 py-5 font-black rounded-[24px] shadow-2xl transition-all transform hover:-translate-y-1 bg-[#9D2449] text-white shadow-[#9D2449]/30 hover:bg-[#7a1c39]"
               >
-                Guardar Afectación
+                {recordToEdit ? 'Actualizar Afectación' : 'Guardar Afectación'}
               </button>
             </div>
 

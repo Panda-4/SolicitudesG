@@ -19,6 +19,7 @@ import DetalleExpedienteCompleto from './components/DetalleExpedienteCompleto';
 import AgendaProcedimientos from './components/AgendaProcedimientos';
 import LoginScreen from './components/LoginScreen';
 import GestionUsuarios from './components/GestionUsuarios';
+import RegistroAuditoria from './components/RegistroAuditoria';
 import { login as authLogin, logout as authLogout, getUser, isAuthenticated, hasPermission, setupAxiosInterceptors } from './services/authService';
 
 function App() {
@@ -30,6 +31,9 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRecord, setSelectedRecord] = useState(null);
+
+  // === ESTADO PARA EDICIÓN ===
+  const [editingRecord, setEditingRecord] = useState({ type: null, record: null });
 
   // === ESTADO PARA AFECTACIONES PRESUPUESTALES ===
   const [afectaciones, setAfectaciones] = useState([]);
@@ -191,6 +195,40 @@ function App() {
     setCurrentView('dashboard');
   };
 
+  // === FUNCIONES DE EDICIÓN Y ELIMINACIÓN ===
+  const handleEditRecord = (type, record) => {
+    setEditingRecord({ type, record });
+    switch (type) {
+      case 'estudio': setCurrentView('register'); break;
+      case 'afectacion': setCurrentView('budget-affectation'); break;
+      case 'procedimiento': setCurrentView('procurement-register'); break;
+      case 'adjudicacion': setCurrentView('adjudication-register'); break;
+    }
+  };
+
+  const handleDeleteRecord = async (type, id, postDeleteAction) => {
+    try {
+      let endpoint = '';
+      switch (type) {
+        case 'estudio': endpoint = `http://localhost:8080/api/estudios/${id}`; break;
+        case 'afectacion': endpoint = `http://localhost:8080/api/afectaciones/${id}`; break;
+        case 'procedimiento': endpoint = `http://localhost:8080/api/procedimientos/${id}`; break;
+        case 'adjudicacion': endpoint = `http://localhost:8080/api/adjudicaciones/${id}`; break;
+      }
+      await axios.delete(endpoint);
+      if (postDeleteAction) postDeleteAction();
+    } catch (error) {
+      console.error(`Error eliminando registro tipo ${type}:`, error);
+      alert('Error al eliminar el registro. Puede estar referenciado por otro módulo.');
+    }
+  };
+
+  // Función para envolver el cambio de vista desde el Sidebar (limpia la edición si se va a un registro nuevo)
+  const handleSidebarChangeView = (view) => {
+    setEditingRecord({ type: null, record: null });
+    setCurrentView(view);
+  };
+
   // Efecto para cargar datos automáticamente según la vista
   useEffect(() => {
     if (currentView === 'query') {
@@ -258,7 +296,7 @@ function App() {
       {/* Sidebar Lateral */}
       <Sidebar 
         view={currentView} 
-        setView={setCurrentView} 
+        setView={handleSidebarChangeView} 
         currentUser={currentUser} 
         handleLogout={handleLogout} 
         hasPermission={hasPermission} 
@@ -304,10 +342,14 @@ function App() {
                 transition={{ duration: 0.3 }}
               >
                 {/* Pasamos fetchRecords como onSuccess para refrescar la tabla y cambiar de vista al guardar */}
-                <FormularioEstudio onSuccess={() => {
-                  fetchRecords();
-                  setCurrentView('query');
-                }} />
+                <FormularioEstudio 
+                  recordToEdit={editingRecord.type === 'estudio' ? editingRecord.record : null}
+                  onSuccess={() => {
+                    setEditingRecord({ type: null, record: null });
+                    fetchRecords();
+                    setCurrentView('query');
+                  }} 
+                />
               </motion.div>
             )}
 
@@ -441,6 +483,11 @@ function App() {
                 <DetalleExpediente 
                   estudio={selectedRecord} 
                   onBack={handleVolverConsulta} 
+                  onEdit={(record) => handleEditRecord('estudio', record)}
+                  onDelete={(id) => handleDeleteRecord('estudio', id, () => {
+                    fetchRecords();
+                    handleVolverConsulta();
+                  })}
                 />
               </motion.div>
             )}
@@ -458,10 +505,14 @@ function App() {
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.3 }}
               >
-                <FormularioAfectacion onSuccess={() => {
-                  fetchAfectaciones();
-                  setCurrentView('budget-query');
-                }} />
+                <FormularioAfectacion 
+                  recordToEdit={editingRecord.type === 'afectacion' ? editingRecord.record : null}
+                  onSuccess={() => {
+                    setEditingRecord({ type: null, record: null });
+                    fetchAfectaciones();
+                    setCurrentView('budget-query');
+                  }} 
+                />
               </motion.div>
             )}
 
@@ -595,6 +646,11 @@ function App() {
                 <DetalleAfectacion 
                   afectacion={selectedAfectacion} 
                   onBack={handleVolverConsultaAfectacion} 
+                  onEdit={(record) => handleEditRecord('afectacion', record)}
+                  onDelete={(id) => handleDeleteRecord('afectacion', id, () => {
+                    fetchAfectaciones();
+                    handleVolverConsultaAfectacion();
+                  })}
                 />
               </motion.div>
             )}
@@ -612,10 +668,14 @@ function App() {
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.3 }}
               >
-                <FormularioAdquisicion onSuccess={() => {
-                  fetchProcedimientos();
-                  setCurrentView('procurement-query');
-                }} />
+                <FormularioAdquisicion 
+                  recordToEdit={editingRecord.type === 'procedimiento' ? editingRecord.record : null}
+                  onSuccess={() => {
+                    setEditingRecord({ type: null, record: null });
+                    fetchProcedimientos();
+                    setCurrentView('procurement-query');
+                  }} 
+                />
               </motion.div>
             )}
 
@@ -747,6 +807,11 @@ function App() {
                 <DetalleProcedimiento
                   procedimiento={selectedProcedimiento}
                   onBack={handleVolverConsultaProcedimiento}
+                  onEdit={(record) => handleEditRecord('procedimiento', record)}
+                  onDelete={(id) => handleDeleteRecord('procedimiento', id, () => {
+                    fetchProcedimientos();
+                    handleVolverConsultaProcedimiento();
+                  })}
                 />
               </motion.div>
             )}
@@ -764,10 +829,14 @@ function App() {
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.3 }}
               >
-                <FormularioAdjudicacion onSuccess={() => {
-                  fetchAdjudicaciones();
-                  setCurrentView('adjudication-query');
-                }} />
+                <FormularioAdjudicacion 
+                  recordToEdit={editingRecord.type === 'adjudicacion' ? editingRecord.record : null}
+                  onSuccess={() => {
+                    setEditingRecord({ type: null, record: null });
+                    fetchAdjudicaciones();
+                    setCurrentView('adjudication-query');
+                  }} 
+                />
               </motion.div>
             )}
 
@@ -891,6 +960,11 @@ function App() {
                 <DetalleAdjudicacion
                   adjudicacion={selectedAdjudicacion2}
                   onBack={handleVolverConsultaAdjudicacion2}
+                  onEdit={(record) => handleEditRecord('adjudicacion', record)}
+                  onDelete={(id) => handleDeleteRecord('adjudicacion', id, () => {
+                    fetchAdjudicaciones();
+                    handleVolverConsultaAdjudicacion2();
+                  })}
                 />
               </motion.div>
             )}
@@ -920,6 +994,10 @@ function App() {
                 <DetalleExpedienteCompleto
                   item={selectedTrazabilidadItem}
                   onBack={handleVolverDashboard}
+                  onEditRecord={handleEditRecord}
+                  onDeleteRecord={(type, id) => handleDeleteRecord(type, id, () => {
+                    handleVolverDashboard();
+                  })}
                 />
               </motion.div>
             )}
@@ -947,6 +1025,19 @@ function App() {
                 transition={{ duration: 0.3 }}
               >
                 <GestionUsuarios />
+              </motion.div>
+            )}
+
+            {/* VISTA: REGISTRO DE AUDITORÍA (Solo ADMIN) */}
+            {currentView === 'audit' && (
+              <motion.div
+                key="audit"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.3 }}
+              >
+                <RegistroAuditoria />
               </motion.div>
             )}
           </AnimatePresence>

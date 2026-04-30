@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
-import java.time.LocalDate; // O String, dependiendo de cómo lo manejes
+
 
 @Entity
 @Table(name = "estudios_mercado") // Asegúrate que el nombre de la tabla coincida con tu BD

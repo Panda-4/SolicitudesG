@@ -61,29 +61,40 @@ public class SecurityConfig {
 
                 // === ESTUDIOS DE MERCADO ===
                 .requestMatchers(HttpMethod.POST, "/api/estudios").hasAnyRole("ADMINISTRADOR", "ESTUDIO_MERCADO")
+                .requestMatchers(HttpMethod.PUT, "/api/estudios/**").hasRole("ADMINISTRADOR")
+                .requestMatchers(HttpMethod.DELETE, "/api/estudios/**").hasRole("ADMINISTRADOR")
                 .requestMatchers(HttpMethod.GET, "/api/estudios/**").hasAnyRole("ADMINISTRADOR", "ESTUDIO_MERCADO", "CONSULTOR")
 
                 // === AFECTACIÓN PRESUPUESTAL ===
                 .requestMatchers(HttpMethod.POST, "/api/afectaciones").hasAnyRole("ADMINISTRADOR", "AFECTACION")
+                .requestMatchers(HttpMethod.PUT, "/api/afectaciones/**").hasRole("ADMINISTRADOR")
+                .requestMatchers(HttpMethod.DELETE, "/api/afectaciones/**").hasRole("ADMINISTRADOR")
                 .requestMatchers(HttpMethod.GET, "/api/afectaciones/**").hasAnyRole("ADMINISTRADOR", "AFECTACION", "CONSULTOR")
 
                 // === ADQUISICIONES / PROCEDIMIENTOS ===
                 .requestMatchers(HttpMethod.POST, "/api/procedimientos").hasAnyRole("ADMINISTRADOR", "ADQUISICIONES")
+                .requestMatchers(HttpMethod.PUT, "/api/procedimientos/**").hasRole("ADMINISTRADOR")
+                .requestMatchers(HttpMethod.DELETE, "/api/procedimientos/**").hasRole("ADMINISTRADOR")
                 .requestMatchers(HttpMethod.GET, "/api/procedimientos/**").hasAnyRole("ADMINISTRADOR", "ADQUISICIONES", "CONSULTOR")
 
                 // === ADJUDICACIÓN ===
                 .requestMatchers(HttpMethod.POST, "/api/adjudicaciones").hasAnyRole("ADMINISTRADOR", "ADJUDICACION")
+                .requestMatchers(HttpMethod.PUT, "/api/adjudicaciones/**").hasRole("ADMINISTRADOR")
+                .requestMatchers(HttpMethod.DELETE, "/api/adjudicaciones/**").hasRole("ADMINISTRADOR")
                 .requestMatchers(HttpMethod.GET, "/api/adjudicaciones/**").hasAnyRole("ADMINISTRADOR", "ADJUDICACION", "CONSULTOR")
 
                 // === EXPEDIENTES Y TRAZABILIDAD ===
+                .requestMatchers(HttpMethod.PUT, "/api/expedientes/**").hasRole("ADMINISTRADOR")
+                .requestMatchers(HttpMethod.DELETE, "/api/expedientes/**").hasRole("ADMINISTRADOR")
                 .requestMatchers(HttpMethod.GET, "/api/expedientes/**").hasAnyRole("ADMINISTRADOR", "CONSULTOR",
                         "ESTUDIO_MERCADO", "AFECTACION", "ADQUISICIONES", "ADJUDICACION")
 
                 // === CATÁLOGOS (lectura para todos los autenticados) ===
                 .requestMatchers(HttpMethod.GET, "/api/catalogos/**").authenticated()
 
-                // === GESTIÓN DE USUARIOS (solo ADMIN) ===
+                // === GESTIÓN DE USUARIOS Y AUDITORÍA (solo ADMIN) ===
                 .requestMatchers("/api/usuarios/**").hasRole("ADMINISTRADOR")
+                .requestMatchers("/api/auditoria/**").hasRole("ADMINISTRADOR")
 
                 // Todo lo demás requiere autenticación
                 .anyRequest().authenticated()

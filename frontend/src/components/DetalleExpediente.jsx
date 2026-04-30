@@ -3,10 +3,15 @@ import { motion } from 'framer-motion';
 import { 
   ArrowLeft, Calendar, Building2, DollarSign, FileText, 
   CheckCircle2, Layers, Tag, Briefcase, Receipt, Clock,
-  ChevronRight, Printer, Download
+  ChevronRight, Printer, Download, Edit3, Trash2
 } from 'lucide-react';
+import { getUser } from '../services/authService';
+import ConfirmModal from './ConfirmModal';
 
-const DetalleExpediente = ({ estudio, onBack }) => {
+const DetalleExpediente = ({ estudio, onBack, onEdit, onDelete }) => {
+  const [isConfirmOpen, setIsConfirmOpen] = React.useState(false);
+  const isAdmin = getUser()?.rol === 'ADMINISTRADOR';
+
   if (!estudio) return null;
 
   // Formateador de moneda
@@ -126,18 +131,49 @@ const DetalleExpediente = ({ estudio, onBack }) => {
         </div>
 
         {/* Footer de Acciones */}
-        <div className="p-8 bg-slate-50 border-t border-slate-100 flex justify-end gap-4 print:hidden">
-          <button 
-            onClick={onBack}
-            className="px-8 py-3 font-bold text-slate-500 hover:text-slate-800 transition-colors"
-          >
-            Cancelar
-          </button>
-          <button onClick={() => window.print()} className="px-8 py-3 bg-[#9D2449] text-white font-bold rounded-2xl shadow-lg shadow-[#9D2449]/20 hover:bg-[#7a1c39] transition-all flex items-center gap-2">
-            Imprimir / Exportar PDF
-          </button>
+        <div className="p-8 bg-slate-50 border-t border-slate-100 flex flex-wrap justify-between items-center gap-4 print:hidden">
+          {/* Lado izquierdo: Acciones de Admin */}
+          <div className="flex gap-4">
+            {isAdmin && (
+              <>
+                <button
+                  onClick={() => onEdit && onEdit(estudio)}
+                  className="px-6 py-3 bg-white border border-[#B38E5D] text-[#B38E5D] font-bold rounded-2xl hover:bg-[#B38E5D] hover:text-white transition-all shadow-sm flex items-center gap-2"
+                >
+                  <Edit3 size={18} /> Editar Registro
+                </button>
+                <button
+                  onClick={() => setIsConfirmOpen(true)}
+                  className="px-6 py-3 bg-white border border-[#9D2449] text-[#9D2449] font-bold rounded-2xl hover:bg-[#9D2449] hover:text-white transition-all shadow-sm flex items-center gap-2"
+                >
+                  <Trash2 size={18} /> Eliminar
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* Lado derecho: Acciones Generales */}
+          <div className="flex gap-4">
+            <button 
+              onClick={onBack}
+              className="px-8 py-3 font-bold text-slate-500 hover:text-slate-800 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button onClick={() => window.print()} className="px-8 py-3 bg-[#9D2449] text-white font-bold rounded-2xl shadow-lg shadow-[#9D2449]/20 hover:bg-[#7a1c39] transition-all flex items-center gap-2">
+              <Printer size={18} /> Imprimir / PDF
+            </button>
+          </div>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={() => onDelete && onDelete(estudio.id)}
+        title="Eliminar Estudio de Mercado"
+        message={`¿Estás seguro de que deseas eliminar permanentemente el estudio con folio ${estudio.folio}? Esta acción no se puede deshacer y quedará registrada en auditoría.`}
+      />
     </motion.div>
   );
 };
