@@ -80,16 +80,10 @@ function App() {
     setCurrentView('register');
   };
 
-  // === SI NO ESTÁ LOGUEADO, MOSTRAR LOGIN ===
-  if (!isLoggedIn) {
-    return <LoginScreen onLogin={handleLogin} />;
-  }
-
   // Función para cargar los registros desde Java
   const fetchRecords = async () => {
     setIsLoading(true);
     try {
-      // Llamada a tu Backend Java para obtener la lista
       const response = await axios.get('http://localhost:8080/api/estudios/lista');
       setRecords(response.data);
     } catch (error) {
@@ -252,6 +246,11 @@ function App() {
            (record.rfc || '').toLowerCase().includes(search) ||
            (record.numeroContrato || '').toLowerCase().includes(search);
   });
+
+  // === SI NO ESTÁ LOGUEADO, MOSTRAR LOGIN ===
+  if (!isLoggedIn) {
+    return <LoginScreen onLogin={handleLogin} />;
+  }
 
   return (
     <div className="flex min-h-screen font-sans bg-[#F8FAFC] text-slate-800">
